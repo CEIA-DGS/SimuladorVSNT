@@ -154,8 +154,55 @@ Library/ Temp/ Logs/ ← gerados pelo Unity (não versionados)
 (SVG + GeoJSON validada vs GDAL, erro < 1 mm); embarcações dinâmicas por spline com
 tipagem AIS; carta tática com visão geral; sensor com detecção / oclusão / tracking.
 
-**Próximos passos:** CPA/TCPA (risco de colisão), regras RIPEAM, replay de AIS
-histórico real, testes de desempenho, integração com o time.
+---
+
+## 🚧 Roadmap / próximos passos
+
+**🎯 Percepção & decisão**
+- **CPA/TCPA** — usar os contatos do sensor para calcular ponto e tempo de aproximação máxima (risco de colisão).
+- **RIPEAM / COLREGS** — motor de decisão (cruzamento, ultrapassagem, vante) com sugestão e execução de manobra.
+- **Tracking robusto** — filtro de Kalman, associação de dados e IDs persistentes para os contatos.
+- **Modelo de sensor realista** — ruído/incerteza na medição, falsos positivos/negativos, curva de detecção por distância e condição de mar; explorar múltiplos sensores (radar, câmera / visão computacional, LiDAR).
+
+**📡 AIS mais realista**
+- Migrar do **rótulo de plausibilidade** atual para **dados AIS reais** (MMSI, tipo, dimensões, SOG/COG, status de navegação).
+- **Replay de tráfego AIS histórico** real da Baía de Guanabara (navios reais no cenário real).
+- **Fusão sensor + AIS** — o sensor detecta, o AIS identifica; simular perda de sinal e ruído.
+
+**🌊 Física & ambiente**
+- Trocar o **movimento cinemático** por **física real** (Rigidbody + forças hidrodinâmicas: empuxo por volume submerso, arrasto, momento de guinada).
+- **Resposta do casco às ondas** (pitch / roll / heave) no lugar da flutuação simples; **correnteza e vento** afetando a deriva.
+- **Ondas Gerstner / FFT** e condições ambientais: maré, estado de mar, dia/noite, neblina/chuva (afetando o sensor).
+
+**🗺️ Novos cenários (outras cartas)**
+- Rodar o mesmo pipeline com **outras cartas S-57**, em **cenas separadas** (ver tabela abaixo).
+
+**🏗️ Arquitetura & desempenho**
+- **Cenas separadas por cenário** — resolver o conflito atual dos dois cenários coexistindo na mesma cena.
+- **Object pooling / GPU instancing / LOD** para escalar o número de embarcações sem perder FPS.
+- **Integração ROS2** (o projeto de referência usa ROS-TCP) — publicar percepção e consumir comandos.
+- Corrigir o **script perdido do `TrafegoDinamico`**; adicionar testes automatizados.
+
+### 🌎 Cartas disponíveis para novos cenários
+
+O acervo do projeto **já tem 15 cartas S-57 da DHN**. O mesmo pipeline
+(**S-57 → ambiente 3D → carta georreferenciada**) roda com qualquer uma — basta gerar cada
+cenário em **cena separada**. Por região:
+
+| Região | Cartas (BR) | UF | Interesse de teste |
+|---|---|---|---|
+| **Baía de Guanabara** | `501511` ✅ · `501512` · `401506` | RJ | **atual** — entrada movimentada, canal, Ponte Rio–Niterói |
+| **Cabo Frio / Arraial do Cabo** | `401508` · `501503` | RJ | costa aberta, ilhas e reserva marinha |
+| **Baía de Santos** | `401711` · `501701` | SP | maior porto do país, canal estreito e tráfego denso — ótimo p/ **RIPEAM** |
+| **Baía de Paranaguá** | `401820` · `501821` · `501822` | PR | Canal da Galheta, manguezais e muitas ilhas — testar **oclusão** do sensor |
+| **Baía de Vitória / Vila Velha** | `401410` · `501401` · `601401` | ES | canal portuário sinuoso, terminais |
+| **Rio Grande / Lagoa dos Patos** | `402110` · `502101` | RS | canal longo e águas rasas — navegação restrita |
+
+> As cartas (`.000`, padrão S-57) ficam em `Vetoriais S-57/`, uma pasta por célula
+> (`BR<número>`). Fonte: **DHN / Centro de Hidrografia da Marinha (CHM)**. Localização de
+> cada carta **verificada pelo extent geográfico via GDAL** (não pelo nome). Cada região
+> tem cartas em escalas diferentes (aproximação 1:45.000 → porto 1:12.000), permitindo
+> começar largo e depois detalhar.
 
 ---
 
