@@ -162,7 +162,5 @@ histórico real, testes de desempenho, integração com o time.
 ## ⚙️ Ambiente & convenções
 
 - **Unity 6.5** (`6000.5.3f1`) / **URP 17.5.0** / Input System novo / Shader Graph.
-- ⚠️ Unity 6.5 deprecou `GetInstanceID()` (erro) e `FindObjectsSortMode` (aviso) —
-  usar `FindObjectsByType<T>()` e chavear dicionários por referência de objeto.
-- ⚠️ O projeto de referência do colega é **HDRP** — materiais/água/shaders **não portam**
+- ⚠️ O projeto de referência é **HDRP** — materiais/água/shaders **não portam**
   para este projeto (URP). Só modelos `.fbx` e scripts são reaproveitáveis.
