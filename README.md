@@ -178,10 +178,8 @@ tipagem AIS; carta tática com visão geral; sensor com detecção / oclusão / 
 - Rodar o mesmo pipeline com **outras cartas S-57**, em **cenas separadas** (ver tabela abaixo).
 
 **🏗️ Arquitetura & desempenho**
-- **Cenas separadas por cenário** — resolver o conflito atual dos dois cenários coexistindo na mesma cena.
 - **Object pooling / GPU instancing / LOD** para escalar o número de embarcações sem perder FPS.
-- **Integração ROS2** (o projeto de referência usa ROS-TCP) — publicar percepção e consumir comandos.
-- Corrigir o **script perdido do `TrafegoDinamico`**; adicionar testes automatizados.
+- **Integração ROS2** (via ROS-TCP) — publicar a percepção e consumir comandos de navegação.
 
 ### 🌎 Cartas disponíveis para novos cenários
 
