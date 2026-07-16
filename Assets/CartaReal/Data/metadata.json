@@ -1,0 +1,15 @@
+{
+  "ncols": 1336,
+  "nrows": 1002,
+  "cell": 15.0,
+  "originUTM_E": 681060.0,
+  "originUTM_N": 7455135.0,
+  "utmZone": 23,
+  "utmSouth": true,
+  "centralMeridian": -45.0,
+  "originLat": -23.0022967623868,
+  "originLon": -43.233408460578026,
+  "elevMin": -75.0,
+  "elevMax": 12.0,
+  "chart": "BR501511 - Barra do Rio de Janeiro"
+}

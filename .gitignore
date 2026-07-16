@@ -1,0 +1,70 @@
+# ============================================================
+#  .gitignore — Projeto Unity (CenarioMaritimoVSNT / PRISMA)
+#  Baseado no template oficial do Unity (github/gitignore).
+#  Regra de ouro: SOBE Assets/, Packages/, ProjectSettings/.
+#  NÃO sobe Library/, Temp/, Logs/ (o Unity regenera tudo isso).
+# ============================================================
+
+# --- Pastas geradas pelo Unity (regeneradas ao abrir o projeto) ---
+/[Ll]ibrary/
+/[Tt]emp/
+/[Oo]bj/
+/[Bb]uild/
+/[Bb]uilds/
+/[Ll]ogs/
+/[Uu]ser[Ss]ettings/
+/[Mm]emoryCaptures/
+/[Rr]ecordings/
+
+# Bee (novo sistema de build do Unity) e artefatos
+/[Aa]rtifacts/
+.consulo/
+
+# --- Arquivos de projeto de IDE gerados (Visual Studio / Rider) ---
+# Regenerados pelo Unity; não versionar.
+ExportedObj/
+.vs/
+.gradle/
+*.csproj
+*.unityproj
+*.sln
+*.slnx
+*.suo
+*.tmp
+*.user
+*.userprefs
+*.pidb
+*.booproj
+*.svd
+*.pdb
+*.mdb
+*.opendb
+*.VC.db
+
+# Rider
+/.idea/
+*.sln.iml
+
+# --- Builds ---
+*.apk
+*.aab
+*.unitypackage
+*.app
+
+# --- Crash reports do Unity ---
+sysinfo.txt
+crashlytics-build.properties
+
+# --- OS ---
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# --- Unity Version Control (Plastic) — metadados; não versionar no Git ---
+/.plastic/
+/ignore.conf
+
+# ============================================================
+#  IMPORTANTE: os arquivos .meta DEVEM ser versionados.
+#  Não adicione "*.meta" aqui — o Unity depende deles (GUIDs).
+# ============================================================
