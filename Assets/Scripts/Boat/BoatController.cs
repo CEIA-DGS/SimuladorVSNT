@@ -1,133 +1,150 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
-using CenarioMaritimo.Water;
+using MaritimeScenario.Water;
 
-namespace CenarioMaritimo.Boat
+namespace MaritimeScenario.Boat
 {
     /// <summary>
-    /// Controle simples da embarcação para testar o cenário durante o Play:
-    /// W/A/S/D ou setas movem e giram o USV. A flutuação amostra a mesma onda
-    /// da água (OndaUtil) em 4 pontos do casco (proa/popa/bombordo/boreste) para
-    /// gerar heave (sobe/desce) e inclinação (arfagem/balanço) condizentes com o
-    /// que se vê — não é um modelo hidrodinâmico de verdade, só uma aproximação
-    /// visual pra "sentir" a escala do cenário. Também mostra, em tempo real, a
-    /// posição local (metros) e a posição geográfica (lat/lon), como demonstração
-    /// ao vivo do georreferenciamento.
+    /// Simple vessel control to test the scenario during Play: W/A/S/D or arrow keys
+    /// move and turn the USV. The buoyancy samples the same water wave (WaveUtil) at 4
+    /// hull points (bow/stern/port/starboard) to produce heave (up/down) and tilt
+    /// (pitch/roll) consistent with what is seen — it is not a real hydrodynamic model,
+    /// just a visual approximation to "feel" the scale of the scenario. It also shows,
+    /// in real time, the local position (meters) and the geographic position (lat/lon),
+    /// as a live demonstration of the georeferencing.
     /// </summary>
     public class BoatController : MonoBehaviour
     {
-        public float velocidade = 10f;
-        public float velocidadeGiro = 70f;
-        public float alturaFlutuacao = 0.5f;
-        public bool mostrarHUD = true;
+        public float Speed = 10f;
+        public float TurnSpeed = 70f;
+        public float BuoyancyHeight = 0.5f;
+        public bool ShowHud = true;
 
         [Header("Limite de terra")]
         [Tooltip("Acima desta altura (Y do terreno) é considerado terra firme — o barco não entra.")]
-        public float alturaLimiteTerra = 0.3f;
+        public float LandHeightThreshold = 0.3f;
         [Tooltip("Colisor do terreno usado para checar a altura embaixo do barco. Se vazio, o limite de terra fica desativado.")]
-        public Collider colisorTerreno;
+        public Collider TerrainCollider;
 
         [Header("Casco (para a flutuação)")]
-        public float comprimento = 4.5f;
-        public float largura = 2.2f;
+        public float Length = 4.5f;
+        public float Beam = 2.2f;
 
         [Header("Onda (deve bater com a Água)")]
-        public float amplitudeOnda = 0.15f;
-        public float escalaOnda = 0.05f;
-        public float velocidadeOnda = 0.6f;
+        public float WaveAmplitude = 0.15f;
+        public float WaveScale = 0.05f;
+        public float WaveSpeed = 0.6f;
 
         IGeoReference geo;
 
+        /// <summary>
+        /// Finds any georeferencing provider (fictional = tangent plane, real = UTM)
+        /// through the shared IGeoReference interface, so the HUD can show lat/lon.
+        /// </summary>
         void Start()
         {
-            // Aceita qualquer georreferenciamento (fictício = plano tangente,
-            // real = UTM) através da interface comum IGeoReference.
             foreach (var mb in FindObjectsByType<MonoBehaviour>())
                 if (mb is IGeoReference g) { geo = g; break; }
         }
 
+        /// <summary>
+        /// Reads the keyboard, moves/turns the USV, blocks it from climbing onto land,
+        /// and applies the wave buoyancy every frame.
+        /// </summary>
         void Update()
         {
-            var teclado = Keyboard.current;
-            if (teclado != null)
+            var keyboard = Keyboard.current;
+            if (keyboard != null)
             {
-                float avanco = 0f;
-                if (teclado.wKey.isPressed || teclado.upArrowKey.isPressed) avanco += 1f;
-                if (teclado.sKey.isPressed || teclado.downArrowKey.isPressed) avanco -= 1f;
+                float forward = 0f;
+                if (keyboard.wKey.isPressed || keyboard.upArrowKey.isPressed) forward += 1f;
+                if (keyboard.sKey.isPressed || keyboard.downArrowKey.isPressed) forward -= 1f;
 
-                float giro = 0f;
-                if (teclado.dKey.isPressed || teclado.rightArrowKey.isPressed) giro += 1f;
-                if (teclado.aKey.isPressed || teclado.leftArrowKey.isPressed) giro -= 1f;
+                float turn = 0f;
+                if (keyboard.dKey.isPressed || keyboard.rightArrowKey.isPressed) turn += 1f;
+                if (keyboard.aKey.isPressed || keyboard.leftArrowKey.isPressed) turn -= 1f;
 
-                Vector3 posAnterior = transform.position;
-                transform.Rotate(Vector3.up, giro * velocidadeGiro * Time.deltaTime);
-                transform.position += transform.forward * avanco * velocidade * Time.deltaTime;
+                Vector3 previousPosition = transform.position;
+                transform.Rotate(Vector3.up, turn * TurnSpeed * Time.deltaTime);
+                transform.position += transform.forward * forward * Speed * Time.deltaTime;
 
-                if (SobreTerra(transform.position))
-                    transform.position = posAnterior; // barra o barco de subir na ilha
+                if (IsOverLand(transform.position))
+                    transform.position = previousPosition; // block the boat from climbing onto the island
             }
 
-            AplicarFlutuacao();
+            ApplyBuoyancy();
         }
 
-        bool SobreTerra(Vector3 pos)
+        /// <summary>
+        /// Tests only against the terrain collider (not "anything in the scene"), so it
+        /// never risks hitting the boat itself or another object. Casts a ray straight
+        /// down and reports whether the terrain height there is above the land threshold.
+        /// </summary>
+        /// <param name="pos">World position to test.</param>
+        /// <returns>True if that position is over land.</returns>
+        bool IsOverLand(Vector3 pos)
         {
-            if (colisorTerreno == null) return false;
+            if (TerrainCollider == null) return false;
 
-            // Testa só contra o colisor do terreno (não "qualquer coisa na cena"),
-            // pra nunca correr o risco de bater no próprio barco ou em outro objeto.
-            var raio = new Ray(pos + Vector3.up * 300f, Vector3.down);
-            if (colisorTerreno.Raycast(raio, out var hit, 1000f))
-                return hit.point.y > alturaLimiteTerra;
+            var ray = new Ray(pos + Vector3.up * 300f, Vector3.down);
+            if (TerrainCollider.Raycast(ray, out var hit, 1000f))
+                return hit.point.y > LandHeightThreshold;
             return false;
         }
 
-        void AplicarFlutuacao()
+        /// <summary>
+        /// Samples the wave at four hull points to make the boat heave and tilt
+        /// (pitch/roll) following the surface. Purely visual, not a physical model.
+        /// </summary>
+        void ApplyBuoyancy()
         {
             Vector3 p = transform.position;
-            Vector3 frente = transform.forward * (comprimento * 0.5f);
-            Vector3 lado = transform.right * (largura * 0.5f);
+            Vector3 front = transform.forward * (Length * 0.5f);
+            Vector3 side = transform.right * (Beam * 0.5f);
 
-            float hProa = OndaUtil.Altura(p.x + frente.x, p.z + frente.z, Time.time, amplitudeOnda, escalaOnda, velocidadeOnda);
-            float hPopa = OndaUtil.Altura(p.x - frente.x, p.z - frente.z, Time.time, amplitudeOnda, escalaOnda, velocidadeOnda);
-            float hBoreste = OndaUtil.Altura(p.x + lado.x, p.z + lado.z, Time.time, amplitudeOnda, escalaOnda, velocidadeOnda);
-            float hBombordo = OndaUtil.Altura(p.x - lado.x, p.z - lado.z, Time.time, amplitudeOnda, escalaOnda, velocidadeOnda);
+            float bowH = WaveUtil.Height(p.x + front.x, p.z + front.z, Time.time, WaveAmplitude, WaveScale, WaveSpeed);
+            float sternH = WaveUtil.Height(p.x - front.x, p.z - front.z, Time.time, WaveAmplitude, WaveScale, WaveSpeed);
+            float starboardH = WaveUtil.Height(p.x + side.x, p.z + side.z, Time.time, WaveAmplitude, WaveScale, WaveSpeed);
+            float portH = WaveUtil.Height(p.x - side.x, p.z - side.z, Time.time, WaveAmplitude, WaveScale, WaveSpeed);
 
-            float alturaMedia = (hProa + hPopa + hBoreste + hBombordo) * 0.25f;
-            p.y = Mathf.Lerp(p.y, alturaFlutuacao + alturaMedia, Time.deltaTime * 6f);
+            float averageHeight = (bowH + sternH + starboardH + portH) * 0.25f;
+            p.y = Mathf.Lerp(p.y, BuoyancyHeight + averageHeight, Time.deltaTime * 6f);
             transform.position = p;
 
-            float pitch = Mathf.Atan2(hPopa - hProa, comprimento) * Mathf.Rad2Deg;
-            float roll = Mathf.Atan2(hBombordo - hBoreste, largura) * Mathf.Rad2Deg;
-            Quaternion rotAlvo = Quaternion.Euler(pitch, transform.eulerAngles.y, roll);
-            transform.rotation = Quaternion.Slerp(transform.rotation, rotAlvo, Time.deltaTime * 4f);
+            float pitch = Mathf.Atan2(sternH - bowH, Length) * Mathf.Rad2Deg;
+            float roll = Mathf.Atan2(portH - starboardH, Beam) * Mathf.Rad2Deg;
+            Quaternion targetRotation = Quaternion.Euler(pitch, transform.eulerAngles.y, roll);
+            transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, Time.deltaTime * 4f);
         }
 
+        /// <summary>Draws the on-screen HUD with the local and geographic positions.</summary>
         void OnGUI()
         {
-            if (!mostrarHUD) return;
+            if (!ShowHud) return;
 
             var pos = transform.position;
-            string texto = $"Local (X, Z): {pos.x:F1} m, {pos.z:F1} m";
+            string text = $"Local (X, Z): {pos.x:F1} m, {pos.z:F1} m";
             if (geo != null)
             {
-                var (lat, lon) = geo.LocalParaGeografica(pos.x, pos.z);
-                texto += $"\nGeográfica (lat, lon): {lat:F6}, {lon:F6}";
+                var (lat, lon) = geo.LocalToGeographic(pos.x, pos.z);
+                text += $"\nGeográfica (lat, lon): {lat:F6}, {lon:F6}";
             }
-            texto += "\nWASD / setas para mover";
+            text += "\nWASD / setas para mover";
 
-            GUI.Label(new Rect(10, 10, 460, 70), texto, EstiloHUD());
+            GUI.Label(new Rect(10, 10, 460, 70), text, HudStyle());
         }
 
-        static GUIStyle _estilo;
-        static GUIStyle EstiloHUD()
+        static GUIStyle hudStyle;
+
+        /// <summary>Lazily builds and caches the GUIStyle used by the HUD label.</summary>
+        static GUIStyle HudStyle()
         {
-            if (_estilo == null)
+            if (hudStyle == null)
             {
-                _estilo = new GUIStyle(GUI.skin.label) { fontSize = 16 };
-                _estilo.normal.textColor = Color.white;
+                hudStyle = new GUIStyle(GUI.skin.label) { fontSize = 16 };
+                hudStyle.normal.textColor = Color.white;
             }
-            return _estilo;
+            return hudStyle;
         }
     }
 }

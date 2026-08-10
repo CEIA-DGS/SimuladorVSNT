@@ -209,3 +209,4 @@ cenário em **cena separada**. Por região:
 - **Unity 6.5** (`6000.5.3f1`) / **URP 17.5.0** / Input System novo / Shader Graph.
 - ⚠️ O projeto de referência é **HDRP** — materiais/água/shaders **não portam**
   para este projeto (URP). Só modelos `.fbx` e scripts são reaproveitáveis.
+phi

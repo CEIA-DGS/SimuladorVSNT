@@ -3,6 +3,9 @@ using Unity.Robotics.ROSTCPConnector;
 using RosMessageTypes.Sensor;
 using RosMessageTypes.Std;
 
+/// <summary>
+/// Publishes camera frame data (image raw) to a ROS topic.
+/// </summary>
 public class RosCameraPublisher : BasePublisher<CameraData>
 {
     [Header("ROS Setup")]
@@ -10,7 +13,6 @@ public class RosCameraPublisher : BasePublisher<CameraData>
     public string frameId = "camera_link";
 
     private ROSConnection ros;
-    private uint sequenceCount = 0;
 
     protected override void SetupPublisher()
     {
@@ -24,7 +26,6 @@ public class RosCameraPublisher : BasePublisher<CameraData>
         {
             header = new HeaderMsg
             {
-                seq = ++sequenceCount,
                 frame_id = frameId,
                 stamp = GetTimeStamp()
             },
@@ -39,12 +40,16 @@ public class RosCameraPublisher : BasePublisher<CameraData>
         ros.Publish(topicName, msg);
     }
 
+    /// <summary>
+    /// Generates a ROS-compatible timestamp based on Unity's elapsed time.
+    /// </summary>
+    /// <returns>A TimeMsg structure containing seconds and nanoseconds.</returns>
     private RosMessageTypes.BuiltinInterfaces.TimeMsg GetTimeStamp()
     {
         float timeNow = Time.time;
         return new RosMessageTypes.BuiltinInterfaces.TimeMsg
         {
-            sec = (uint)Mathf.Floor(timeNow),
+            sec = (int)Mathf.Floor(timeNow),
             nanosec = (uint)Mathf.Floor((timeNow - Mathf.Floor(timeNow)) * 1e9f)
         };
     }

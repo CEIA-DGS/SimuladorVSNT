@@ -5,18 +5,18 @@ using System.Linq;
 using System.Text;
 using UnityEditor;
 using UnityEngine;
-using CenarioMaritimo.Chart;
-using CenarioMaritimo.Geo;
+using MaritimeScenario.Chart;
+using MaritimeScenario.Geo;
 
-namespace CenarioMaritimo.EditorTools
+namespace MaritimeScenario.EditorTools
 {
     /// <summary>
-    /// Exporta a carta náutica do cenário em dois formatos:
-    ///   - carta_nautica.geojson: dado vetorial (LNDARE/DEPARE/boias/rochedos já
-    ///     convertidos para lat/lon através do GeoReferenceOrigin), pronto para ser
-    ///     consumido pelos módulos de navegação/percepção.
-    ///   - carta_nautica_preview.png: uma captura de câmera ortográfica de cima,
-    ///     como uma versão simplificada em imagem para conferência visual.
+    /// Exports the scenario's nautical chart in two formats:
+    ///   - carta_nautica.geojson: vector data (LNDARE/DEPARE/buoys/rocks already
+    ///     converted to lat/lon through GeoReferenceOrigin), ready to be
+    ///     consumed by the navigation/perception modules.
+    ///   - carta_nautica_preview.png: a top-down orthographic camera capture,
+    ///     as a simplified image for visual review.
     /// </summary>
     public static class ChartExporter
     {
@@ -45,35 +45,35 @@ namespace CenarioMaritimo.EditorTools
             sb.Append("{\"type\":\"FeatureCollection\",\"features\":[");
             bool primeira = true;
 
-            foreach (var poly in fonte.poligonos)
+            foreach (var poly in fonte.Polygons)
             {
                 if (!primeira) sb.Append(",");
                 primeira = false;
 
                 sb.Append("{\"type\":\"Feature\",\"properties\":{");
-                sb.Append($"\"OBJL\":\"{poly.objectClass}\"");
-                if (poly.objectClass == ObjClass.DEPARE)
+                sb.Append($"\"OBJL\":\"{poly.ObjectClass}\"");
+                if (poly.ObjectClass == ObjClass.DEPARE)
                 {
                     sb.Append($",\"DRVAL1\":{poly.DRVAL1.ToString(CultureInfo.InvariantCulture)}");
                     sb.Append($",\"DRVAL2\":{poly.DRVAL2.ToString(CultureInfo.InvariantCulture)}");
                 }
                 sb.Append("},\"geometry\":{\"type\":\"Polygon\",\"coordinates\":[");
-                sb.Append(AnelParaJson(poly.ringXZ, geo, inverter: false));
-                if (poly.holeXZ != null && poly.holeXZ.Count >= 3)
+                sb.Append(AnelParaJson(poly.RingXZ, geo, inverter: false));
+                if (poly.HoleXZ != null && poly.HoleXZ.Count >= 3)
                 {
-                    // Anel interno (buraco) precisa de orientação oposta ao externo (RFC 7946).
+                    // Inner ring (hole) needs opposite winding from the outer one (RFC 7946).
                     sb.Append(",");
-                    sb.Append(AnelParaJson(poly.holeXZ, geo, inverter: true));
+                    sb.Append(AnelParaJson(poly.HoleXZ, geo, inverter: true));
                 }
                 sb.Append("]}}");
             }
 
-            foreach (var pt in fonte.pontos)
+            foreach (var pt in fonte.Points)
             {
                 sb.Append(",{\"type\":\"Feature\",\"properties\":{");
-                sb.Append($"\"OBJL\":\"{pt.objectClass}\",\"nome\":\"{pt.nome}\"");
+                sb.Append($"\"OBJL\":\"{pt.ObjectClass}\",\"nome\":\"{pt.Name}\"");
                 sb.Append("},\"geometry\":{\"type\":\"Point\",\"coordinates\":[");
-                var (lat, lon) = geo.LocalParaGeografica(pt.posicaoXZ.x, pt.posicaoXZ.y);
+                var (lat, lon) = geo.LocalToGeographic(pt.PositionXZ.x, pt.PositionXZ.y);
                 sb.Append($"{F(lon)},{F(lat)}");
                 sb.Append("]}}");
             }
@@ -88,8 +88,8 @@ namespace CenarioMaritimo.EditorTools
             var sb = new StringBuilder("[");
             for (int i = 0; i <= pontos.Count; i++)
             {
-                var v = pontos[i % pontos.Count]; // fecha o anel repetindo o 1º ponto
-                var (lat, lon) = geo.LocalParaGeografica(v.x, v.y);
+                var v = pontos[i % pontos.Count]; // close the ring by repeating the 1st point
+                var (lat, lon) = geo.LocalToGeographic(v.x, v.y);
                 sb.Append($"[{F(lon)},{F(lat)}]");
                 if (i < pontos.Count) sb.Append(",");
             }
@@ -101,7 +101,7 @@ namespace CenarioMaritimo.EditorTools
         {
             var camGO = new GameObject("CameraCartaTemp");
             var cam = camGO.AddComponent<Camera>();
-            cam.enabled = false; // renderizamos manualmente via cam.Render(), não pelo loop normal
+            cam.enabled = false; // we render manually via cam.Render(), not through the normal loop
             cam.orthographic = true;
             cam.orthographicSize = raioCena;
             cam.transform.position = new Vector3(0f, 200f, 0f);

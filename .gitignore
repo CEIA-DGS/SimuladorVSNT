@@ -64,6 +64,11 @@ desktop.ini
 /.plastic/
 /ignore.conf
 
+# --- Ferramentas de apoio (cache/config local, não é código do projeto) ---
+/graphify-out/
+/.claude/
+/CLAUDE.md
+
 # ============================================================
 #  IMPORTANTE: os arquivos .meta DEVEM ser versionados.
 #  Não adicione "*.meta" aqui — o Unity depende deles (GUIDs).

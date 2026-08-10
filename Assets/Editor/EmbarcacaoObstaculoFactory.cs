@@ -1,18 +1,20 @@
 using System.Collections.Generic;
 using UnityEngine;
-using CenarioMaritimo.Boat;
+using MaritimeScenario.Boat;
 
-namespace CenarioMaritimo.EditorTools
+namespace MaritimeScenario.EditorTools
 {
     /// <summary>
-    /// Constrói embarcações-obstáculo a partir de um VesselType (data-driven):
-    /// sorteia o comprimento na faixa do tipo, deriva boca/altura/calado, escolhe
-    /// a superestrutura pelo estilo e ajusta a velocidade. Adiciona o componente
-    /// EmbarcacaoDinamica (movimento por spline + vetor de estado). Simples de
-    /// propósito (poucos polígonos) para permitir muitas embarcações na cena.
+    /// Builds obstacle vessels from a VesselType (data-driven): rolls the length
+    /// within the type's range, derives beam/height/draft, picks the superstructure
+    /// by style and sets the speed. Adds the DynamicVessel component (spline
+    /// movement + state vector) and an AisBroadcaster with a unique MMSI. Intentionally
+    /// low-poly to allow many vessels in the scene.
     /// </summary>
     public static class EmbarcacaoObstaculoFactory
     {
+        private static readonly HashSet<uint> usedMmsis = new HashSet<uint>();
+
         static Material Lit(Color cor, float smoothness = 0.3f)
         {
             var m = new Material(Shader.Find("Universal Render Pipeline/Lit"));
@@ -23,17 +25,26 @@ namespace CenarioMaritimo.EditorTools
 
         public static GameObject Criar(Transform pai, VesselType tipo, Vector3 pos)
         {
-            float comp = tipo.SortearComprimentoM();
-            float boca = comp * tipo.razaoBoca;
+            float comp = tipo.RollLengthM();
+            float boca = comp * tipo.BeamRatio;
             float calado = Mathf.Clamp(comp * 0.045f, 0.6f, 9f);
-            float altura = Mathf.Clamp(comp * 0.06f, 1.8f, 15f); // borda livre do casco
-            Color cor = tipo.cor;
+            float altura = Mathf.Clamp(comp * 0.06f, 1.8f, 15f); // hull freeboard
+            Color cor = tipo.HullColor;
 
-            var raiz = new GameObject($"Obst_{tipo.nomeExibicao}");
+            var raiz = new GameObject($"Obst_{tipo.DisplayName}");
             raiz.transform.SetParent(pai, false);
             raiz.transform.position = pos;
 
-            // ---- casco ----
+            // ---- guarantees a Rigidbody for the AisBroadcaster ----
+            var rb = raiz.GetComponent<Rigidbody>();
+            if (rb == null)
+            {
+                rb = raiz.AddComponent<Rigidbody>();
+                rb.useGravity = false;
+                rb.isKinematic = true;
+            }
+
+            // ---- hull ----
             var casco = new GameObject("Casco");
             casco.transform.SetParent(raiz.transform, false);
             casco.AddComponent<MeshFilter>().sharedMesh = GerarCasco(comp, boca, altura, calado);
@@ -43,42 +54,74 @@ namespace CenarioMaritimo.EditorTools
 
             var matConves = Lit(new Color(cor.r * 0.6f, cor.g * 0.6f, cor.b * 0.6f));
 
-            // ---- superestrutura por estilo ----
-            switch (tipo.estilo)
+            // ---- superstructure by style ----
+            switch (tipo.Style)
             {
-                case EstiloCasco.Cargueiro:
-                    // ponte alta na popa
+                case HullStyle.Cargo:
+                    // tall bridge at the stern
                     AddCaixa(casco.transform, new Vector3(0f, altura - calado + 6f, -comp * 0.35f),
                              new Vector3(boca * 0.8f, 12f, comp * 0.12f), Lit(Color.white));
-                    // conveses de carga (blocos)
+                    // cargo decks (blocks)
                     for (int i = -1; i <= 2; i++)
                         AddCaixa(casco.transform, new Vector3(0f, altura - calado + 2f, comp * 0.10f * i),
                                  new Vector3(boca * 0.7f, 4f, comp * 0.08f), matConves);
-                    // chaminé
+                    // funnel
                     AddCilindro(casco.transform, new Vector3(0f, altura - calado + 13f, -comp * 0.35f),
                                 new Vector3(2.5f, 3f, 2.5f), Lit(new Color(0.2f, 0.2f, 0.2f)));
                     break;
-                case EstiloCasco.Media:
+                case HullStyle.Medium:
                     AddCaixa(casco.transform, new Vector3(0f, altura - calado + 2.2f, -comp * 0.1f),
                              new Vector3(boca * 0.7f, 4.4f, comp * 0.28f), Lit(Color.white));
                     AddMastro(casco.transform, new Vector3(0f, altura - calado + 4.4f, -comp * 0.1f), 5f);
                     break;
-                default: // Lancha
+                default: // Launch
                     AddCaixa(casco.transform, new Vector3(0f, altura - calado + 0.9f, -comp * 0.05f),
                              new Vector3(boca * 0.6f, 1.6f, comp * 0.35f), Lit(new Color(0.15f, 0.3f, 0.55f)));
                     break;
             }
 
-            var din = raiz.AddComponent<EmbarcacaoDinamica>();
-            din.comprimento = comp;
-            din.largura = boca;
-            din.tipo = tipo.nomeExibicao;
-            din.velocidade = tipo.SortearVelocidadeMS();
+            var din = raiz.AddComponent<DynamicVessel>();
+            din.Length = comp;
+            din.Beam = boca;
+            din.Kind = tipo.DisplayName;
+            din.Speed = tipo.RollSpeedMs();
+
+            // ---- adds and configures the AisBroadcaster ----
+            var ais = raiz.AddComponent<AisBroadcaster>();
+            ais.mmsi = GenerateUniqueMmsi();
+            ais.vesselType = MapStyleToAisType(tipo.Style);
 
             return raiz;
         }
 
-        // -------- helpers de peça --------
+        private static uint GenerateUniqueMmsi()
+        {
+            uint mmsi;
+            int attempts = 0;
+            do
+            {
+                mmsi = (uint)Random.Range(200000000, 799999999);
+                attempts++;
+                if (attempts > 100) break;
+            }
+            while (usedMmsis.Contains(mmsi));
+
+            usedMmsis.Add(mmsi);
+            return mmsi;
+        }
+
+        private static byte MapStyleToAisType(HullStyle style)
+        {
+            switch (style)
+            {
+                case HullStyle.Cargo: return 70;   // Cargo
+                case HullStyle.Medium: return 60;  // Passenger / Other
+                case HullStyle.Launch: return 37;  // Pleasure Craft
+                default: return 99;
+            }
+        }
+
+        // -------- part helpers --------
 
         static void AddCaixa(Transform pai, Vector3 pos, Vector3 escala, Material mat)
         {
@@ -113,11 +156,11 @@ namespace CenarioMaritimo.EditorTools
             go.GetComponent<Renderer>().sharedMaterial = Lit(new Color(0.1f, 0.1f, 0.1f));
         }
 
-        // -------- casco (proa em ponta, popa reta), origem na linha d'água --------
+        // -------- hull (pointed bow, flat stern), origin at the waterline --------
         static Mesh GerarCasco(float comp, float boca, float altura, float calado)
         {
             float mb = boca * 0.5f, L = comp * 0.5f;
-            // (z, meia-boca, fundo, convés) — popa -> proa
+            // (z, half-beam, bottom, deck) — stern -> bow
             var est = new (float z, float larg, float fundo, float conves)[]
             {
                 (-L,          mb * 0.92f, -calado,        altura - calado),
@@ -142,13 +185,13 @@ namespace CenarioMaritimo.EditorTools
 
             void Q(int a, int b, int c, int d) { tris.Add(a); tris.Add(b); tris.Add(c); tris.Add(a); tris.Add(c); tris.Add(d); }
 
-            Q(an[0, 0], an[0, 3], an[0, 2], an[0, 1]); // popa
+            Q(an[0, 0], an[0, 3], an[0, 2], an[0, 1]); // stern
             for (int i = 0; i < est.Length - 1; i++)
             {
-                Q(an[i, 0], an[i, 1], an[i + 1, 1], an[i + 1, 0]); // fundo
-                Q(an[i, 1], an[i, 2], an[i + 1, 2], an[i + 1, 1]); // boreste
-                Q(an[i, 2], an[i, 3], an[i + 1, 3], an[i + 1, 2]); // convés
-                Q(an[i, 3], an[i, 0], an[i + 1, 0], an[i + 1, 3]); // bombordo
+                Q(an[i, 0], an[i, 1], an[i + 1, 1], an[i + 1, 0]); // bottom
+                Q(an[i, 1], an[i, 2], an[i + 1, 2], an[i + 1, 1]); // starboard
+                Q(an[i, 2], an[i, 3], an[i + 1, 3], an[i + 1, 2]); // deck
+                Q(an[i, 3], an[i, 0], an[i + 1, 0], an[i + 1, 3]); // port
             }
             int u = est.Length - 1;
             tris.Add(an[u, 0]); tris.Add(an[u, 1]); tris.Add(ip);

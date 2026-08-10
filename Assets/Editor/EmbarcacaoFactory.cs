@@ -1,15 +1,15 @@
 using System.Collections.Generic;
 using UnityEngine;
-using CenarioMaritimo.Boat;
+using MaritimeScenario.Boat;
 
-namespace CenarioMaritimo.EditorTools
+namespace MaritimeScenario.EditorTools
 {
     /// <summary>
-    /// Constrói a embarcação (VSNT/DGS-15) por código: casco afunilado, tubos
-    /// infláveis, console, mastro em "A" com sensor, motor de popa. Fica separado
-    /// para ser reutilizado pelo cenário fictício e pelo cenário real sem duplicar.
-    /// Specs reais (Projeto PRISMA): comprimento 4,5 m, boca 2,0 m, calado 0,55 m,
-    /// linha d'água -> topo do mastro 2,30 m.
+    /// Builds the vessel (VSNT/DGS-15) by code: tapered hull, inflatable tubes,
+    /// console, "A"-frame mast with sensor, outboard motor. Kept separate so it
+    /// can be reused by the fictional and the real scenario without duplication.
+    /// Real specs (PRISMA Project): length 4.5 m, beam 2.0 m, draft 0.55 m,
+    /// waterline -> mast top 2.30 m.
     /// </summary>
     public static class EmbarcacaoFactory
     {
@@ -39,7 +39,7 @@ namespace CenarioMaritimo.EditorTools
             cascoGO.transform.SetParent(raiz.transform, false);
             cascoGO.AddComponent<MeshFilter>().sharedMesh = GerarMalhaCasco(COMPRIMENTO, LARGURA, CALADO);
             var matCasco = Lit(new Color(0.12f, 0.12f, 0.13f), 0.35f);
-            matCasco.SetFloat("_Cull", 0f); // dupla face
+            matCasco.SetFloat("_Cull", 0f); // double-sided
             cascoGO.AddComponent<MeshRenderer>().sharedMaterial = matCasco;
 
             var matTubo = Lit(new Color(0.65f, 0.08f, 0.08f), 0.5f);
@@ -107,13 +107,13 @@ namespace CenarioMaritimo.EditorTools
             helice.GetComponent<Renderer>().sharedMaterial = Lit(new Color(0.6f, 0.6f, 0.62f), 0.7f, 0.6f);
 
             var boat = raiz.AddComponent<BoatController>();
-            boat.comprimento = COMPRIMENTO;
-            boat.largura = LARGURA;
-            boat.amplitudeOnda = ondaAmplitude;
-            boat.escalaOnda = ondaEscala;
-            boat.velocidadeOnda = ondaVelocidade;
-            boat.colisorTerreno = colisorTerreno;
-            boat.alturaFlutuacao = alturaFlutuacao;
+            boat.Length = COMPRIMENTO;
+            boat.Beam = LARGURA;
+            boat.WaveAmplitude = ondaAmplitude;
+            boat.WaveScale = ondaEscala;
+            boat.WaveSpeed = ondaVelocidade;
+            boat.TerrainCollider = colisorTerreno;
+            boat.BuoyancyHeight = alturaFlutuacao;
 
             return raiz;
         }

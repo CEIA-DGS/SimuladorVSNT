@@ -9,7 +9,6 @@ public class RosGpsPublisher : BasePublisher<GpsData>
     public string frameId = "gps_link";
 
     private ROSConnection ros;
-    private uint sequenceCount = 0;
 
     protected override void SetupPublisher()
     {
@@ -30,7 +29,6 @@ public class RosGpsPublisher : BasePublisher<GpsData>
         {
             header = new RosMessageTypes.Std.HeaderMsg
             {
-                seq = ++sequenceCount,
                 frame_id = frameId,
                 stamp = GetTimeStamp()
             },
@@ -54,7 +52,7 @@ public class RosGpsPublisher : BasePublisher<GpsData>
         float timeNow = Time.time;
         return new RosMessageTypes.BuiltinInterfaces.TimeMsg
         {
-            sec = (uint)Mathf.Floor(timeNow),
+            sec = (int)Mathf.Floor(timeNow),
             nanosec = (uint)Mathf.Floor((timeNow - Mathf.Floor(timeNow)) * 1e9f)
         };
     }

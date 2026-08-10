@@ -2,29 +2,35 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace CenarioMaritimo.Chart
+namespace MaritimeScenario.Chart
 {
-    // Classes de objeto da carta, nomeadas conforme o padrão IHO S-57 (ver relatório
-    // "Levantamento de requisitos", seção 2.3): LNDARE = área de terra, DEPARE = área
-    // de profundidade. BOYSHP/UWTROC aproximam boia e rochedo (objetos pontuais).
+    /// <summary>
+    /// Chart area object classes, named after the IHO S-57 standard (see the
+    /// "requirements survey" report, section 2.3): LNDARE = land area,
+    /// DEPARE = depth area.
+    /// </summary>
     public enum ObjClass { LNDARE, DEPARE }
-    public enum PointObjClass { BOYSHP, UWTROC } // boia / rochedo submerso
 
+    /// <summary>Chart point object classes: BOYSHP = buoy, UWTROC = underwater rock.</summary>
+    public enum PointObjClass { BOYSHP, UWTROC }
+
+    /// <summary>A polygonal chart feature (land or depth area) in the local X,Z plane.</summary>
     [Serializable]
     public class ChartFeature
     {
-        public ObjClass objectClass;
-        public List<Vector2> ringXZ = new(); // anel externo do polígono, plano local X,Z (metros)
-        public List<Vector2> holeXZ; // anel interno (buraco), opcional — ex.: a faixa mais rasa/a ilha
-        public float DRVAL1; // profundidade mínima (m abaixo do datum) — só DEPARE
-        public float DRVAL2; // profundidade máxima (m abaixo do datum) — só DEPARE
+        public ObjClass ObjectClass;
+        public List<Vector2> RingXZ = new(); // outer polygon ring, local X,Z plane (meters)
+        public List<Vector2> HoleXZ; // inner ring (hole), optional — e.g. the shallower band / the island
+        public float DRVAL1; // minimum depth (m below datum) — DEPARE only
+        public float DRVAL2; // maximum depth (m below datum) — DEPARE only
     }
 
+    /// <summary>A point chart feature (buoy or rock) in the local X,Z plane.</summary>
     [Serializable]
     public class ChartPointFeature
     {
-        public PointObjClass objectClass;
-        public Vector2 posicaoXZ; // plano local X,Z (metros) — .x = X, .y = Z
-        public string nome;
+        public PointObjClass ObjectClass;
+        public Vector2 PositionXZ; // local X,Z plane (meters) — .x = X, .y = Z
+        public string Name;
     }
 }

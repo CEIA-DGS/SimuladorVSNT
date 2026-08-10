@@ -1,15 +1,15 @@
 {
-  "ncols": 1336,
-  "nrows": 1002,
-  "cell": 15.0,
-  "originUTM_E": 681060.0,
-  "originUTM_N": 7455135.0,
-  "utmZone": 23,
-  "utmSouth": true,
-  "centralMeridian": -45.0,
-  "originLat": -23.0022967623868,
-  "originLon": -43.233408460578026,
-  "elevMin": -75.0,
-  "elevMax": 12.0,
-  "chart": "BR501511 - Barra do Rio de Janeiro"
+  "Columns": 1336,
+  "Rows": 1002,
+  "CellSize": 15.0,
+  "OriginUtmE": 681060.0,
+  "OriginUtmN": 7455135.0,
+  "UtmZone": 23,
+  "UtmSouth": true,
+  "CentralMeridian": -45.0,
+  "OriginLat": -23.0022967623868,
+  "OriginLon": -43.233408460578026,
+  "ElevationMin": -75.0,
+  "ElevationMax": 12.0,
+  "ChartName": "BR501511 - Barra do Rio de Janeiro"
 }

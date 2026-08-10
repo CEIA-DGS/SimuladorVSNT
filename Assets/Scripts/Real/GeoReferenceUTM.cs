@@ -1,65 +1,85 @@
 using System;
 using UnityEngine;
 
-namespace CenarioMaritimo.Real
+namespace MaritimeScenario.Real
 {
     /// <summary>
-    /// Georreferenciamento do cenário REAL (a partir de carta ENC S-57).
+    /// Georeferencing of the REAL scenario (built from an ENC S-57 chart).
     ///
-    /// Aqui o plano local do Unity (X = Leste, Z = Norte, em metros) corresponde
-    /// diretamente ao sistema UTM da carta, deslocado pela origem (canto SW):
+    /// Here the local Unity plane (X = East, Z = North, in meters) maps directly to the
+    /// chart's UTM system, offset by the origin (SW corner):
     ///     UTM_E = originE + x ;  UTM_N = originN + z
     ///
-    /// A conversão UTM -> latitude/longitude (WGS84) usa a fórmula inversa de
-    /// Transverse Mercator (Snyder). Esta implementação foi validada ponto a ponto
-    /// contra o GDAL/PROJ, com erro < 1 mm — portanto reflete a posição geográfica
-    /// real da carta, não uma aproximação de plano tangente.
+    /// The UTM &lt;-&gt; latitude/longitude (WGS84) conversion uses the Transverse
+    /// Mercator formulas (Snyder), both inverse and forward. The inverse direction was
+    /// validated point by point against GDAL/PROJ, with error &lt; 1 mm — so it reflects
+    /// the real geographic position of the chart, not a tangent-plane approximation.
     /// </summary>
     [DisallowMultipleComponent]
     public class GeoReferenceUTM : MonoBehaviour, IGeoReference
     {
         [Header("Origem UTM (canto SW da carta)")]
-        public double originE;
-        public double originN;
-        public int utmZone = 23;
-        public bool utmSouth = true;
+        public double OriginE;
+        public double OriginN;
+        public int UtmZone = 23;
+        public bool UtmSouth = true;
 
         [Header("Referência (só informativo)")]
-        public double originLat;
-        public double originLon;
-        public string carta = "";
+        public double OriginLat;
+        public double OriginLon;
+        public string ChartName = "";
 
+        /// <summary>Most recently enabled instance, for convenient global access.</summary>
         public static GeoReferenceUTM Instance { get; private set; }
+
         void Awake() => Instance = this;
         void OnEnable() { if (Instance == null) Instance = this; }
 
-        const double A = 6378137.0;              // semieixo maior WGS84
-        const double F = 1.0 / 298.257223563;    // achatamento
-        const double K0 = 0.9996;                // fator de escala UTM
+        const double A = 6378137.0;              // WGS84 semi-major axis
+        const double F = 1.0 / 298.257223563;    // flattening
+        const double K0 = 0.9996;                // UTM scale factor
 
-        double CentralMeridianRad => (utmZone * 6 - 183) * Math.PI / 180.0;
+        double CentralMeridianRad => (UtmZone * 6 - 183) * Math.PI / 180.0;
 
-        /// <summary>Posição local do Unity (X,Z metros) -> (latitude, longitude) em graus.</summary>
-        public (double lat, double lon) LocalParaGeografica(float x, float z)
+        /// <summary>Converts a local Unity position (X, Z in meters) to (latitude, longitude) in degrees.</summary>
+        public (double lat, double lon) LocalToGeographic(float x, float z)
         {
-            double E = originE + x;
-            double N = originN + z;
-            return UtmParaLatLon(E, N);
+            double e = OriginE + x;
+            double n = OriginN + z;
+            return UtmToLatLon(e, n);
         }
 
-        public (double lat, double lon) LocalParaGeografica(Vector3 posicaoLocal)
-            => LocalParaGeografica(posicaoLocal.x, posicaoLocal.z);
+        /// <summary>Converts a local Unity position (uses X and Z) to (latitude, longitude) in degrees.</summary>
+        public (double lat, double lon) LocalToGeographic(Vector3 localPosition)
+            => LocalToGeographic(localPosition.x, localPosition.z);
 
-        (double lat, double lon) UtmParaLatLon(double E, double N)
+        /// <summary>Converts (latitude, longitude) in degrees to a local Unity position (X, Z in meters).</summary>
+        public Vector2 GeographicToLocal(double lat, double lon)
+        {
+            var (e, n) = LatLonToUtm(lat, lon);
+            double x = e - OriginE;
+            double z = n - OriginN;
+            return new Vector2((float)x, (float)z);
+        }
+
+        /// <summary>
+        /// Inverse Transverse Mercator (Snyder): converts absolute UTM easting/northing
+        /// to latitude/longitude in radians-derived degrees. Variable names follow the
+        /// formula's notation on purpose, to keep it verifiable against the reference.
+        /// </summary>
+        /// <param name="e">UTM easting (meters, including the 500 km false easting).</param>
+        /// <param name="n">UTM northing (meters, including the southern false northing).</param>
+        /// <returns>Latitude and longitude, in degrees.</returns>
+        (double lat, double lon) UtmToLatLon(double e, double n)
         {
             double e2 = F * (2 - F);
             double ep2 = e2 / (1 - e2);
 
-            E -= 500000.0;
-            if (utmSouth) N -= 10000000.0;
+            e -= 500000.0;
+            if (UtmSouth) n -= 10000000.0;
 
-            double M = N / K0;
-            double mu = M / (A * (1 - e2 / 4 - 3 * e2 * e2 / 64 - 5 * e2 * e2 * e2 / 256));
+            double m = n / K0;
+            double mu = m / (A * (1 - e2 / 4 - 3 * e2 * e2 / 64 - 5 * e2 * e2 * e2 / 256));
             double e1 = (1 - Math.Sqrt(1 - e2)) / (1 + Math.Sqrt(1 - e2));
 
             double phi1 = mu
@@ -70,24 +90,75 @@ namespace CenarioMaritimo.Real
 
             double cosPhi1 = Math.Cos(phi1);
             double tanPhi1 = Math.Tan(phi1);
-            double C1 = ep2 * cosPhi1 * cosPhi1;
-            double T1 = tanPhi1 * tanPhi1;
+            double c1 = ep2 * cosPhi1 * cosPhi1;
+            double t1 = tanPhi1 * tanPhi1;
             double sinPhi1 = Math.Sin(phi1);
-            double N1 = A / Math.Sqrt(1 - e2 * sinPhi1 * sinPhi1);
-            double R1 = A * (1 - e2) / Math.Pow(1 - e2 * sinPhi1 * sinPhi1, 1.5);
-            double D = E / (N1 * K0);
+            double n1 = A / Math.Sqrt(1 - e2 * sinPhi1 * sinPhi1);
+            double r1 = A * (1 - e2) / Math.Pow(1 - e2 * sinPhi1 * sinPhi1, 1.5);
+            double d = e / (n1 * K0);
 
-            double D2 = D * D, D3 = D2 * D, D4 = D3 * D, D5 = D4 * D, D6 = D5 * D;
+            double d2 = d * d, d3 = d2 * d, d4 = d3 * d, d5 = d4 * d, d6 = d5 * d;
 
-            double lat = phi1 - (N1 * tanPhi1 / R1) * (D2 / 2
-                - (5 + 3 * T1 + 10 * C1 - 4 * C1 * C1 - 9 * ep2) * D4 / 24
-                + (61 + 90 * T1 + 298 * C1 + 45 * T1 * T1 - 252 * ep2 - 3 * C1 * C1) * D6 / 720);
+            double lat = phi1 - (n1 * tanPhi1 / r1) * (d2 / 2
+                - (5 + 3 * t1 + 10 * c1 - 4 * c1 * c1 - 9 * ep2) * d4 / 24
+                + (61 + 90 * t1 + 298 * c1 + 45 * t1 * t1 - 252 * ep2 - 3 * c1 * c1) * d6 / 720);
 
-            double lon = CentralMeridianRad + (D
-                - (1 + 2 * T1 + C1) * D3 / 6
-                + (5 - 2 * C1 + 28 * T1 - 3 * C1 * C1 + 8 * ep2 + 24 * T1 * T1) * D5 / 120) / cosPhi1;
+            double lon = CentralMeridianRad + (d
+                - (1 + 2 * t1 + c1) * d3 / 6
+                + (5 - 2 * c1 + 28 * t1 - 3 * c1 * c1 + 8 * ep2 + 24 * t1 * t1) * d5 / 120) / cosPhi1;
 
             return (lat * 180.0 / Math.PI, lon * 180.0 / Math.PI);
+        }
+
+        /// <summary>
+        /// Forward Transverse Mercator (Snyder): converts latitude/longitude (degrees) to
+        /// absolute UTM easting/northing (meters). Variable names follow the formula's
+        /// notation on purpose, to keep it verifiable against the reference.
+        /// </summary>
+        /// <param name="lat">Latitude, in degrees.</param>
+        /// <param name="lon">Longitude, in degrees.</param>
+        /// <returns>UTM easting and northing, in meters.</returns>
+        (double e, double n) LatLonToUtm(double lat, double lon)
+        {
+            double latRad = lat * Math.PI / 180.0;
+            double lonRad = lon * Math.PI / 180.0;
+
+            double e2 = F * (2 - F);
+            double ep2 = e2 / (1 - e2);
+
+            double sinLat = Math.Sin(latRad);
+            double cosLat = Math.Cos(latRad);
+            double tanLat = Math.Tan(latRad);
+
+            double nRad = A / Math.Sqrt(1 - e2 * sinLat * sinLat);
+            double t = tanLat * tanLat;
+            double c = ep2 * cosLat * cosLat;
+            double aVar = (lonRad - CentralMeridianRad) * cosLat;
+
+            double m = A * (
+                (1 - e2 / 4 - 3 * e2 * e2 / 64 - 5 * e2 * e2 * e2 / 256) * latRad
+                - (3 * e2 / 8 + 3 * e2 * e2 / 32 + 45 * e2 * e2 * e2 / 1024) * Math.Sin(2 * latRad)
+                + (15 * e2 * e2 / 256 + 45 * e2 * e2 * e2 / 1024) * Math.Sin(4 * latRad)
+                - (35 * e2 * e2 * e2 / 3072) * Math.Sin(6 * latRad)
+            );
+
+            double a2 = aVar * aVar;
+            double a3 = a2 * aVar;
+            double a4 = a3 * aVar;
+            double a5 = a4 * aVar;
+            double a6 = a5 * aVar;
+
+            double e = 500000.0 + (K0 * nRad * (aVar
+                + (1 - t + c) * a3 / 6
+                + (5 - 18 * t + t * t + 72 * c - 58 * ep2) * a5 / 120));
+
+            double n = K0 * (m + nRad * tanLat * (a2 / 2
+                + (5 - t + 9 * c + 4 * c * c) * a4 / 24
+                + (61 - 58 * t + t * t + 600 * c - 330 * ep2) * a6 / 720));
+
+            if (UtmSouth) n += 10000000.0; // false northing for the southern hemisphere
+
+            return (e, n);
         }
     }
 }

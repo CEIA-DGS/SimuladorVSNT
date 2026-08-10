@@ -1,44 +1,50 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace CenarioMaritimo.Chart
+namespace MaritimeScenario.Chart
 {
     /// <summary>
-    /// Guarda, na cena, a "fonte de verdade" vetorial da carta (polígonos LNDARE/DEPARE
-    /// e pontos de boias/rochedos) gerada junto com o cenário 3D. É essa lista e não
-    /// a malha 3D que representa a carta náutica e que deve ser exportada/usada pelos
-    /// módulos de navegação e percepção (Relatório do Digital Twin: "vetor para
-    /// navegar, malha para mostrar na tela").
+    /// Holds, in the scene, the vector "source of truth" of the chart (LNDARE/DEPARE
+    /// polygons and buoy/rock points) generated together with the 3D scenario. It is
+    /// this list, not the 3D mesh, that represents the nautical chart and that should be
+    /// exported/used by the navigation and perception modules (Digital Twin report:
+    /// "vector to navigate, mesh to show on screen").
     /// </summary>
     public class ChartFeatureSource : MonoBehaviour
     {
-        public List<ChartFeature> poligonos = new();
-        public List<ChartPointFeature> pontos = new();
+        public List<ChartFeature> Polygons = new();
+        public List<ChartPointFeature> Points = new();
 
         [Header("Desenho de depuração (Scene view)")]
-        public bool desenharGizmos = true;
+        public bool DrawGizmos = true;
 
+        /// <summary>
+        /// Draws the chart polygons (colored by class/depth) and points in the Scene
+        /// view, as a debug overlay of the vector source of truth.
+        /// </summary>
         void OnDrawGizmos()
         {
-            if (!desenharGizmos) return;
+            if (!DrawGizmos) return;
 
-            foreach (var f in poligonos)
+            foreach (var f in Polygons)
             {
-                Gizmos.color = f.objectClass == ObjClass.LNDARE
+                Gizmos.color = f.ObjectClass == ObjClass.LNDARE
                     ? new Color(0.3f, 0.85f, 0.35f)
                     : Color.Lerp(new Color(0.4f, 0.85f, 1f), new Color(0.05f, 0.15f, 0.55f),
                                  Mathf.InverseLerp(0f, 20f, f.DRVAL2));
 
-                DesenharAnel(f.ringXZ);
-                DesenharAnel(f.holeXZ);
+                DrawRing(f.RingXZ);
+                DrawRing(f.HoleXZ);
             }
 
             Gizmos.color = Color.yellow;
-            foreach (var p in pontos)
-                Gizmos.DrawSphere(new Vector3(p.posicaoXZ.x, 1f, p.posicaoXZ.y), 1.2f);
+            foreach (var p in Points)
+                Gizmos.DrawSphere(new Vector3(p.PositionXZ.x, 1f, p.PositionXZ.y), 1.2f);
         }
 
-        static void DesenharAnel(List<Vector2> r)
+        /// <summary>Draws the closed outline of a polygon ring, slightly above the water.</summary>
+        /// <param name="r">Ring vertices in the local X,Z plane.</param>
+        static void DrawRing(List<Vector2> r)
         {
             if (r == null || r.Count < 2) return;
             for (int i = 0; i < r.Count; i++)

@@ -4,28 +4,28 @@ using System.IO;
 using System.Text;
 using UnityEditor;
 using UnityEngine;
-using CenarioMaritimo.Chart;
+using MaritimeScenario.Chart;
 
-namespace CenarioMaritimo.EditorTools
+namespace MaritimeScenario.EditorTools
 {
     /// <summary>
-    /// Gera a carta náutica VETORIZADA e GEORREFERENCIADA a partir do AMBIENTE 3D
-    /// da cena — funciona tanto para o cenário REAL quanto para o FICTÍCIO.
+    /// Generates the VECTORIZED and GEOREFERENCED nautical chart from the scene's
+    /// 3D ENVIRONMENT — works for both the REAL and the FICTIONAL scenario.
     ///
-    /// Lê a malha do terreno da cena, reconstrói a grade de profundidades e extrai
-    /// CONTORNOS por marching squares — linha de costa (0 m) e isóbatas — que são
-    /// vetores de verdade. Converte cada vértice para lat/lon (WGS84) via o
-    /// georreferenciamento presente na cena (IGeoReference: plano tangente no
-    /// fictício, UTM no real). Produz, por cenário:
-    ///   - *.svg     : desenho vetorial (metros locais, para ver)
-    ///   - *.geojson : dado GEORREFERENCIADO em lat/lon (produto para a navegação)
+    /// Reads the scene's terrain mesh, reconstructs the depth grid and extracts
+    /// CONTOURS via marching squares — coastline (0 m) and isobaths — which are
+    /// true vectors. Converts each vertex to lat/lon (WGS84) through the
+    /// georeferencing present in the scene (IGeoReference: tangent plane in the
+    /// fictional one, UTM in the real one). Produces, per scenario:
+    ///   - *.svg     : vector drawing (local meters, for viewing)
+    ///   - *.geojson : GEOREFERENCED data in lat/lon (product for navigation)
     /// </summary>
     public static class CartaVetorizadaExporter
     {
         class Config
         {
-            public string nomeMalha;      // nome do GameObject da malha do terreno
-            public float exagero;         // exagero vertical aplicado na malha (p/ recuperar profundidade real)
+            public string nomeMalha;      // name of the terrain mesh's GameObject
+            public float exagero;         // vertical exaggeration applied to the mesh (to recover the real depth)
             public string saidaSvg;
             public string saidaGeojson;
             public List<(Vector3 pos, string tipo)> obstaculos;
@@ -45,7 +45,7 @@ namespace CenarioMaritimo.EditorTools
             Gerar(new Config
             {
                 nomeMalha = "TerrenoCarta",
-                exagero = 4f, // = EXAGERO_VERTICAL do CenarioRealBuilder
+                exagero = 4f, // = EXAGERO_VERTICAL from CenarioRealBuilder
                 saidaSvg = "Assets/CartaReal/carta_vetorizada_unity.svg",
                 saidaGeojson = "Assets/CartaReal/carta_vetorizada_unity.geojson",
                 obstaculos = obst,
@@ -58,23 +58,23 @@ namespace CenarioMaritimo.EditorTools
             var obst = new List<(Vector3, string)>();
             var fonte = Object.FindAnyObjectByType<ChartFeatureSource>();
             if (fonte != null)
-                foreach (var p in fonte.pontos)
+                foreach (var p in fonte.Points)
                 {
-                    string tipo = p.objectClass == PointObjClass.BOYSHP ? "boia_lateral" : "rochedo";
-                    obst.Add((new Vector3(p.posicaoXZ.x, 0f, p.posicaoXZ.y), tipo));
+                    string tipo = p.ObjectClass == PointObjClass.BOYSHP ? "boia_lateral" : "rochedo";
+                    obst.Add((new Vector3(p.PositionXZ.x, 0f, p.PositionXZ.y), tipo));
                 }
 
             Gerar(new Config
             {
                 nomeMalha = "TerrenoOceano",
-                exagero = 1f, // fictício não usa exagero
+                exagero = 1f, // the fictional scenario does not use exaggeration
                 saidaSvg = "Assets/CartaNautica/carta_vetorizada_unity.svg",
                 saidaGeojson = "Assets/CartaNautica/carta_vetorizada_unity.geojson",
                 obstaculos = obst,
             });
         }
 
-        // -------------------- núcleo --------------------
+        // -------------------- core --------------------
 
         static void Gerar(Config cfg)
         {
@@ -86,24 +86,24 @@ namespace CenarioMaritimo.EditorTools
                 return;
             }
 
-            // ---- reconstrói a grade a partir dos vértices da malha ----
+            // ---- reconstructs the grid from the mesh vertices ----
             var verts = terreno.sharedMesh.vertices;
             int cols = 1;
             while (cols < verts.Length && verts[cols].x > verts[cols - 1].x) cols++;
             int rows = verts.Length / cols;
             float step = cols > 1 ? verts[1].x - verts[0].x : 1f;
-            float originX = verts[0].x;   // coord local X do canto (pode ser negativa no fictício)
+            float originX = verts[0].x;   // local X coord of the corner (can be negative in the fictional one)
             float originZ = verts[0].z;
 
             var elev = new float[rows, cols];
             for (int r = 0; r < rows; r++)
                 for (int c = 0; c < cols; c++)
-                    elev[r, c] = verts[r * cols + c].y / cfg.exagero; // profundidade real
+                    elev[r, c] = verts[r * cols + c].y / cfg.exagero; // real depth
 
             float W = (cols - 1) * step;
             float H = (rows - 1) * step;
 
-            // ---- contornos (marching squares) em coords de grade (0-based) ----
+            // ---- contours (marching squares) in grid coords (0-based) ----
             var costa = MarchingSquares(elev, step, 0f);
             var isobatas = new (float nivel, List<Vector4> segs)[]
             {
@@ -113,9 +113,9 @@ namespace CenarioMaritimo.EditorTools
                 (-20f, MarchingSquares(elev, step, -20f)),
             };
 
-            // ---- SVG (coords de grade 0..W, 0..H) ----
+            // ---- SVG (grid coords 0..W, 0..H) ----
             var sb = new StringBuilder();
-            float scale = Mathf.Clamp(2000f / Mathf.Max(W, 1f), 0.06f, 6f); // ~2000 px no maior lado
+            float scale = Mathf.Clamp(2000f / Mathf.Max(W, 1f), 0.06f, 6f); // ~2000 px on the longer side
             sb.Append($"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"{W * scale:F0}\" height=\"{H * scale:F0}\" viewBox=\"0 0 {F(W)} {F(H)}\">\n");
             sb.Append($"<rect x=\"0\" y=\"0\" width=\"{F(W)}\" height=\"{F(H)}\" fill=\"#ffffff\"/>\n");
             sb.Append($"<g transform=\"translate(0,{F(H)}) scale(1,-1)\">\n");
@@ -129,7 +129,7 @@ namespace CenarioMaritimo.EditorTools
             Directory.CreateDirectory(Path.GetDirectoryName(cfg.saidaSvg));
             File.WriteAllText(cfg.saidaSvg, sb.ToString());
 
-            // ---- GeoJSON georreferenciado (lat/lon) ----
+            // ---- georeferenced GeoJSON (lat/lon) ----
             var geo = AcharGeoReference();
             string msgGeo;
             if (geo != null)
@@ -181,7 +181,7 @@ namespace CenarioMaritimo.EditorTools
             return Mathf.Lerp(a, b, Mathf.Clamp01(t));
         }
 
-        // -------------------- desenho SVG --------------------
+        // -------------------- SVG drawing --------------------
 
         static void DesenharSegmentos(StringBuilder sb, List<Vector4> segs, string cor, float largura)
         {
@@ -219,7 +219,7 @@ namespace CenarioMaritimo.EditorTools
             sb.Append("<g>\n");
             foreach (var (pos, tipo) in obst)
             {
-                float x = pos.x - originX, z = pos.z - originZ; // -> coords de grade (0-based) do SVG
+                float x = pos.x - originX, z = pos.z - originZ; // -> SVG grid coords (0-based)
                 (string cor, string forma) = SimboloDe(tipo);
                 float raio = (tipo == "farol" || tipo == "naufragio") ? 45f : 35f;
                 if (forma == "circulo")
@@ -247,11 +247,11 @@ namespace CenarioMaritimo.EditorTools
                 case "naufragio": return ("#703020", "x");
                 case "farol": return ("#d020a0", "circulo");
                 case "baliza": return ("#202020", "circulo");
-                default: return ("#f0c020", "circulo"); // boias
+                default: return ("#f0c020", "circulo"); // buoys
             }
         }
 
-        // -------------------- GeoJSON georreferenciado --------------------
+        // -------------------- georeferenced GeoJSON --------------------
 
         static string ConstruirGeoJson(IGeoReference geo, float originX, float originZ,
             List<Vector4> costa, List<(float nivel, List<Vector4> segs)> isobatas,
@@ -268,7 +268,7 @@ namespace CenarioMaritimo.EditorTools
             if (obst != null)
                 foreach (var (pos, tipo) in obst)
                 {
-                    var (lat, lon) = geo.LocalParaGeografica(pos.x, pos.z);
+                    var (lat, lon) = geo.LocalToGeographic(pos.x, pos.z);
                     if (!primeira) sb.Append(",\n");
                     primeira = false;
                     sb.Append($"{{\"type\":\"Feature\",\"properties\":{{\"OBJL\":\"{tipo}\"}},"
@@ -292,15 +292,15 @@ namespace CenarioMaritimo.EditorTools
             for (int i = 0; i < segs.Count; i++)
             {
                 var s = segs[i];
-                var (lat1, lon1) = geo.LocalParaGeografica(originX + s.x, originZ + s.y);
-                var (lat2, lon2) = geo.LocalParaGeografica(originX + s.z, originZ + s.w);
+                var (lat1, lon1) = geo.LocalToGeographic(originX + s.x, originZ + s.y);
+                var (lat2, lon2) = geo.LocalToGeographic(originX + s.z, originZ + s.w);
                 if (i > 0) sb.Append(",");
                 sb.Append($"[[{F7(lon1)},{F7(lat1)}],[{F7(lon2)},{F7(lat2)}]]");
             }
             sb.Append("]}}");
         }
 
-        // -------------------- utilidades --------------------
+        // -------------------- utilities --------------------
 
         static MeshFilter AcharMeshFilter(string nome)
         {

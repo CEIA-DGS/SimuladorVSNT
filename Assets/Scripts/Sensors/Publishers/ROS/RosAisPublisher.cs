@@ -1,6 +1,6 @@
 using UnityEngine;
 using Unity.Robotics.ROSTCPConnector;
-using RosMessageTypes.Auv; 
+using RosMessageTypes.Dt;
 
 public class RosAisPublisher : BasePublisher<AisData>
 {
@@ -9,7 +9,6 @@ public class RosAisPublisher : BasePublisher<AisData>
     public string frameId = "ais_antenna_link";
 
     private ROSConnection ros;
-    private uint sequenceCount = 0;
 
     protected override void SetupPublisher()
     {
@@ -40,7 +39,6 @@ public class RosAisPublisher : BasePublisher<AisData>
         {
             header = new RosMessageTypes.Std.HeaderMsg
             {
-                seq = ++sequenceCount,
                 frame_id = frameId,
                 stamp = GetTimeStamp()
             },
@@ -55,7 +53,7 @@ public class RosAisPublisher : BasePublisher<AisData>
         float timeNow = Time.time;
         return new RosMessageTypes.BuiltinInterfaces.TimeMsg
         {
-            sec = (uint)Mathf.Floor(timeNow),
+            sec = (int)Mathf.Floor(timeNow),
             nanosec = (uint)Mathf.Floor((timeNow - Mathf.Floor(timeNow)) * 1e9f)
         };
     }

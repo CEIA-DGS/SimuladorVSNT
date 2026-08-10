@@ -1,13 +1,19 @@
-namespace CenarioMaritimo
+namespace MaritimeScenario
 {
     /// <summary>
-    /// Contrato comum de georreferenciamento: converte uma posição local do Unity
-    /// (X = Leste, Z = Norte, em metros) para latitude/longitude (graus).
-    /// Implementado tanto pelo cenário fictício (plano tangente) quanto pelo
-    /// cenário real (UTM), para que a embarcação exiba lat/lon nos dois casos.
+    /// Common georeferencing contract: converts a local Unity position
+    /// (X = East, Z = North, in meters) to latitude/longitude (degrees).
+    /// Implemented both by the fictional scenario (tangent plane) and by the
+    /// real scenario (UTM), so the vessel can display lat/lon in both cases.
     /// </summary>
     public interface IGeoReference
     {
-        (double lat, double lon) LocalParaGeografica(float x, float z);
+        /// <summary>
+        /// Converts a local position to geographic coordinates.
+        /// </summary>
+        /// <param name="x">Local X coordinate (East), in meters.</param>
+        /// <param name="z">Local Z coordinate (North), in meters.</param>
+        /// <returns>Latitude and longitude, in degrees.</returns>
+        (double lat, double lon) LocalToGeographic(float x, float z);
     }
 }
