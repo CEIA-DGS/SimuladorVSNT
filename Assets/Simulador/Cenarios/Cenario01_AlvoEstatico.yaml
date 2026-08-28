@@ -1,0 +1,40 @@
+# Cenário determinístico 01 — obstáculo estático sobre a rota.
+#
+# Coordenadas: X = Leste, Z = Norte, em metros da cena.
+# Rumos em graus: 0 = Norte, 90 = Leste, 180 = Sul, 270 = Oeste.
+# Todas as posições de alvo e de waypoint são RELATIVAS à partida do USV,
+# então o cenário inteiro pode ser movido para outro ponto da carta
+# mudando apenas 'startXZ'.
+
+scenario:
+  name: 01 - Alvo estático
+  description: >-
+    O USV segue rumo Norte e encontra um obstáculo parado sobre a própria rota,
+    600 m à frente. Espera-se que perceba o obstáculo e desvie, retomando a rota depois.
+
+  usv:
+    # Água aberta da Baía de Guanabara.
+    startXZ: [9900, 7500]
+    startHeadingDegrees: 0
+    cruiseSpeedKnots: 12
+
+    # A própria simulação publica a rota no WaypointManager: o teste não pode
+    # depender de um publicador ROS externo para ser reproduzível.
+    publishWaypoints: true
+    waypointOffsetsXZ:
+      - [0, 0]
+      - [0, 1000]
+
+  criteria:
+    maxDurationSeconds: 200
+    minSafeDistanceMeters: 100
+
+  targets:
+    - name: ObstaculoParado
+      behaviour: Static
+      startOffsetXZ: [0, 600]
+      headingDegrees: 0
+      speedKnots: 0
+      lengthMeters: 30
+      beamMeters: 12
+      hullColor: "#8C8C94"

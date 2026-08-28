@@ -31,10 +31,11 @@ namespace MaritimeScenario.Sensor
         public IReadOnlyCollection<Contact> Contacts => contacts.Values;
 
         /// <summary>
-        /// Triggers the sweep at fixed intervals (not every frame), to approximate a
-        /// real radar and save processing.
+        /// Triggers the sweep at fixed intervals, to approximate a real radar and save
+        /// processing. Runs on the physics step so the sweep instants are reproducible
+        /// across runs (a requirement of the deterministic test scenarios).
         /// </summary>
-        void Update()
+        void FixedUpdate()
         {
             if (Time.time < nextScanTime) return;
             nextScanTime = Time.time + ScanInterval;

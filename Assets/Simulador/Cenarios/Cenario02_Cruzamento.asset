@@ -1,0 +1,38 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1ba3dd90110830645adc7426800c45b3, type: 3}
+  m_Name: Cenario02_Cruzamento
+  m_EditorClassIdentifier: Assembly-CSharp::MaritimeScenario.Testing.ScenarioDefinition
+  DisplayName: 02 - Cruzamento perpendicular
+  Description: "Um alvo cruza da direita para a esquerda em rota de colis\xE3o. Pela
+    Regra 15 (RIPEAM), o USV enxerga o alvo por boreste e deve dar passagem, manobrando
+    por tr\xE1s dele."
+  UsvStartXZ: {x: 9900, y: 7500}
+  UsvStartHeadingDegrees: 0
+  UsvCruiseSpeedKnots: 12
+  PublishWaypoints: 1
+  WaypointOffsetsXZ:
+  - {x: 0, y: 0}
+  - {x: 0, y: 1500}
+  Targets:
+  - Name: AlvoCruzando
+    StartOffsetXZ: {x: 600, y: 600}
+    HeadingDegrees: 270
+    SpeedKnots: 12
+    Behaviour: 1
+    RouteOffsetsXZ: []
+    LoopRoute: 1
+    Length: 60
+    Beam: 14
+    HullColor: {r: 0.75, g: 0.35, b: 0.15, a: 1}
+  MaxDurationSeconds: 180
+  MinSafeDistanceMeters: 100

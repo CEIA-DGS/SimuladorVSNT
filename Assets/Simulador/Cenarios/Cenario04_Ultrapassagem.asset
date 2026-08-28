@@ -1,0 +1,38 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1ba3dd90110830645adc7426800c45b3, type: 3}
+  m_Name: Cenario04_Ultrapassagem
+  m_EditorClassIdentifier: Assembly-CSharp::MaritimeScenario.Testing.ScenarioDefinition
+  DisplayName: 04 - Ultrapassagem de alvo mais lento
+  Description: "Um alvo mais lento segue \xE0 frente, no mesmo rumo. Pela Regra 13
+    (RIPEAM), o USV \xE9 o navio que alcan\xE7a e deve se manter afastado enquanto
+    ultrapassa."
+  UsvStartXZ: {x: 9900, y: 7500}
+  UsvStartHeadingDegrees: 0
+  UsvCruiseSpeedKnots: 12
+  PublishWaypoints: 1
+  WaypointOffsetsXZ:
+  - {x: 0, y: 0}
+  - {x: 0, y: 1500}
+  Targets:
+  - Name: AlvoLento
+    StartOffsetXZ: {x: 0, y: 400}
+    HeadingDegrees: 0
+    SpeedKnots: 5
+    Behaviour: 1
+    RouteOffsetsXZ: []
+    LoopRoute: 1
+    Length: 45
+    Beam: 12
+    HullColor: {r: 0.3, g: 0.45, b: 0.7, a: 1}
+  MaxDurationSeconds: 180
+  MinSafeDistanceMeters: 100

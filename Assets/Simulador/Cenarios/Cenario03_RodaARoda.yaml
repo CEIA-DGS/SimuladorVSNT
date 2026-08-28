@@ -1,0 +1,32 @@
+# Cenário determinístico 03 — encontro roda-a-roda / head-on (RIPEAM, Regra 14).
+
+scenario:
+  name: 03 - Roda-a-roda (head-on)
+  description: >-
+    Um alvo vem de frente, na mesma linha e em sentido contrário. Pela Regra 14
+    (RIPEAM), o USV deve guinar para boreste e passar bombordo com bombordo.
+
+  usv:
+    startXZ: [9900, 7500]
+    startHeadingDegrees: 0
+    cruiseSpeedKnots: 12
+    publishWaypoints: true
+    waypointOffsetsXZ:
+      - [0, 0]
+      - [0, 1000]
+
+  criteria:
+    maxDurationSeconds: 200
+    minSafeDistanceMeters: 100
+
+  targets:
+    # 1200 m à frente vindo a 12 nós contra os 12 nós do USV: a aproximação é a
+    # soma das duas velocidades, então o encontro se resolve em cerca de 1 minuto.
+    - name: AlvoDeFrente
+      behaviour: StraightLine
+      startOffsetXZ: [0, 1200]
+      headingDegrees: 180
+      speedKnots: 12
+      lengthMeters: 70
+      beamMeters: 16
+      hullColor: "#CC3333"

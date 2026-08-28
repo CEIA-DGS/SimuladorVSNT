@@ -30,7 +30,12 @@ public class LosGuidance : MonoBehaviour
         wpManager = GetComponent<WaypointManager>();
     }
 
-    private void Update()
+    /// <summary>
+    /// Runs on the physics step (not per frame) because the guidance references feed
+    /// UsvController, which also runs in FixedUpdate. Computing them per frame would
+    /// make the result depend on the frame rate and break run-to-run reproducibility.
+    /// </summary>
+    private void FixedUpdate()
     {
         if (!wpManager.IsMissionActive)
         {

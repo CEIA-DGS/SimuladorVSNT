@@ -1,0 +1,85 @@
+# =============================================================================
+# Bateria padrão de testes de navegação — Simulador VSNT
+# =============================================================================
+#
+# Este é o único arquivo que precisa ser editado para mudar o que a bancada roda.
+# Rode a mesma bateria antes e depois de mexer no algoritmo de navegação: os CSV
+# gerados dão os números para comparar as duas versões nas MESMAS condições.
+#
+# Como executar:
+#   1. Cenário Real > 1. Construir a partir da Carta
+#   2. Cenário Real > 5. Preparar Bancada por Arquivo (YAML)
+#   3. Play
+#
+# Saída (na pasta 'output.folder'):
+#   <bateria>_<data>_execucoes.csv  uma linha por execução
+#   <bateria>_<data>_cpa.csv        uma linha por encontro (USV x alvo)
+#   <bateria>_<data>_resumo.md      resumo legível, com as reprovações detalhadas
+#   <cenario>[_seedN].png           mapa de cada execução sobre a carta
+# =============================================================================
+
+suite: Bateria padrão RIPEAM
+description: >-
+  Os quatro encontros clássicos do RIPEAM mais uma varredura de sementes de
+  estresse. Serve como linha de base do desempenho dos algoritmos de navegação.
+
+environment:
+  # Altura da malha de água criada pelo CenarioRealBuilder.
+  waterHeight: 0.05
+
+  # Passo fixo de física, em segundos. 0.02 = 50 Hz. Precisa ser o mesmo em toda
+  # a bateria, senão as execuções deixam de ser comparáveis entre si.
+  fixedTimeStep: 0.02
+
+  # Semente do Random global da Unity. Fixá-la faz o ruído incidental (o dos
+  # modelos de sensor, por exemplo) se repetir igual a cada execução.
+  randomSeed: 12345
+
+  # Quantas vezes mais rápido que o tempo real a bateria roda. NÃO altera nenhum
+  # resultado: muda só quanto tempo simulado passa por segundo de relógio, e não o
+  # tamanho do passo de física. Vale porque tudo que afeta medição roda no passo
+  # fixo. Use 1 para acompanhar a simulação na tela.
+  timeScale: 8
+
+output:
+  folder: Assets/CartaReal/Testes
+  exportMaps: true
+  exportResults: true
+
+  # Vírgula: é o que pandas e R leem sem argumento nenhum. Troque por ";" se a
+  # equipe for abrir os arquivos direto no Excel em português.
+  csvSeparator: ","
+
+scenarios:
+  # ---- determinísticos: um arquivo por cenário ----------------------------
+  # Caminhos relativos são procurados primeiro ao lado deste arquivo.
+  - file: Cenario01_AlvoEstatico.yaml
+  - file: Cenario02_Cruzamento.yaml
+  - file: Cenario03_RodaARoda.yaml
+  - file: Cenario04_Ultrapassagem.yaml
+
+  # ---- estresse: uma execução por semente ---------------------------------
+  # Anote a semente de uma execução que falhou: repetir a bateria só com ela
+  # reproduz exatamente as mesmas posições, rotas, velocidades e tamanhos.
+  - random:
+      seeds: [20260813, 20260814, 20260815]
+
+      usvStartXZ: [9900, 7500]
+      areaRadius: 2000
+      minDistanceFromUsv: 300
+
+      # Faixas escritas como [mínimo, máximo].
+      targetCount: [6, 14]
+      speedRangeKnots: [4, 16]
+      lengthRangeMeters: [15, 120]
+      routePoints: [2, 4]
+      legLengthMeters: [400, 1500]
+
+      # Proporção de alvos parados (0 = todos se movem, 1 = todos parados).
+      staticTargetRatio: 0.15
+
+      # Sem rota publicada o USV fica parado e o teste não mede nada.
+      publishUsvWaypoints: true
+
+      maxDurationSeconds: 300
+      minSafeDistanceMeters: 100

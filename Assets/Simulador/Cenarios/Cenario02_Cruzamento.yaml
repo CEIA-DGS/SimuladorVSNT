@@ -1,0 +1,33 @@
+# Cenário determinístico 02 — cruzamento perpendicular (RIPEAM, Regra 15).
+
+scenario:
+  name: 02 - Cruzamento perpendicular
+  description: >-
+    Um alvo cruza da direita para a esquerda em rota de colisão. Pela Regra 15
+    (RIPEAM), o USV enxerga o alvo por boreste e deve dar passagem, manobrando
+    por trás dele.
+
+  usv:
+    startXZ: [9900, 7500]
+    startHeadingDegrees: 0
+    cruiseSpeedKnots: 12
+    publishWaypoints: true
+    waypointOffsetsXZ:
+      - [0, 0]
+      - [0, 1000]
+
+  criteria:
+    maxDurationSeconds: 200
+    minSafeDistanceMeters: 100
+
+  targets:
+    # Sai 600 m a leste e 600 m ao norte, rumo Oeste: chega ao ponto de cruzamento
+    # ao mesmo tempo que o USV, que sobe 600 m rumo Norte na mesma velocidade.
+    - name: AlvoCruzando
+      behaviour: StraightLine
+      startOffsetXZ: [600, 600]
+      headingDegrees: 270
+      speedKnots: 12
+      lengthMeters: 60
+      beamMeters: 14
+      hullColor: "#BF5926"

@@ -1,0 +1,32 @@
+# Cenário determinístico 04 — ultrapassagem de alvo mais lento (RIPEAM, Regra 13).
+
+scenario:
+  name: 04 - Ultrapassagem de alvo mais lento
+  description: >-
+    Um alvo mais lento segue à frente, no mesmo rumo. Pela Regra 13 (RIPEAM),
+    o USV é o navio que alcança e deve se manter afastado enquanto ultrapassa.
+
+  usv:
+    startXZ: [9900, 7500]
+    startHeadingDegrees: 0
+    cruiseSpeedKnots: 12
+    publishWaypoints: true
+    waypointOffsetsXZ:
+      - [0, 0]
+      - [0, 1000]
+
+  criteria:
+    maxDurationSeconds: 200
+    minSafeDistanceMeters: 100
+
+  targets:
+    # 400 m à frente a 5 nós, contra os 12 nós do USV: a aproximação é lenta,
+    # dando tempo de a manobra de ultrapassagem se desenvolver.
+    - name: AlvoLento
+      behaviour: StraightLine
+      startOffsetXZ: [0, 400]
+      headingDegrees: 0
+      speedKnots: 5
+      lengthMeters: 45
+      beamMeters: 12
+      hullColor: "#4D73B3"

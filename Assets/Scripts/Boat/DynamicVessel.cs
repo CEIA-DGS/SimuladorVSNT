@@ -95,12 +95,18 @@ namespace MaritimeScenario.Boat
         /// <summary>
         /// Advances the vessel along the path at its speed, orients it along the tangent,
         /// and updates the exposed velocity and heading (the state vector).
+        ///
+        /// Runs on the fixed physics step so traffic is reproducible: for a given
+        /// simulated instant the vessel is always at the same point of the route,
+        /// regardless of frame rate. This is what makes the test scenarios repeatable.
         /// </summary>
-        void Update()
+        void FixedUpdate()
         {
             if (samples == null || samples.Length < 2 || totalLength <= 0.01f) return;
 
-            distance += Speed * Time.deltaTime;
+            float dt = Time.fixedDeltaTime;
+
+            distance += Speed * dt;
             distance = Loop ? Mathf.Repeat(distance, totalLength) : Mathf.Clamp(distance, 0f, totalLength);
 
             Vector3 pos = PositionAtDistance(distance);
@@ -112,10 +118,10 @@ namespace MaritimeScenario.Boat
             if (flatDir.sqrMagnitude > 1e-4f)
             {
                 var target = Quaternion.LookRotation(flatDir.normalized);
-                transform.rotation = Quaternion.Slerp(transform.rotation, target, Time.deltaTime * 2f);
+                transform.rotation = Quaternion.Slerp(transform.rotation, target, dt * 2f);
                 HeadingDegrees = target.eulerAngles.y;
             }
-            CurrentVelocity = delta / Mathf.Max(Time.deltaTime, 1e-4f);
+            CurrentVelocity = delta / Mathf.Max(dt, 1e-4f);
             previousPosition = pos;
         }
 

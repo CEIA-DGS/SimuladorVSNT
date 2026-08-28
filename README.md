@@ -113,17 +113,124 @@ navegação.
 
 ---
 
-## 📦 Baixando o projeto
+## 🧪 Bancada de testes de navegação
 
-O projeto vive em **dois repositórios** (o time trabalha no Unity VCS; o GitHub é a
-"vitrine" com este README):
+Os cenários de teste são declarados em **arquivos YAML**, não na cena. Isso deixa a
+bateria versionável, revisável em *diff* e editável sem abrir a Unity — e é o que permite
+rodar exatamente o mesmo conjunto de testes contra duas versões de um algoritmo.
 
-- **Unity Version Control** (org **DGS-Ceia**, repo `SimuladorVSNT`) — fonte principal.
-  No Unity: **Window → Unity Version Control**, login, workspace apontando para o repo, e **update**.
-- **GitHub** (`CEIA-DGS/SimuladorVSNT`, privado) — usa **Git LFS** para os binários.
-  Rode `git lfs install` uma vez, depois `git clone`.
+```bash
+Assets/Simulador/Cenarios/
+├── suite_padrao.yaml              # a bateria: o que roda e em que ordem
+├── Cenario01_AlvoEstatico.yaml    # obstáculo parado sobre a rota
+├── Cenario02_Cruzamento.yaml      # cruzamento perpendicular  (RIPEAM, Regra 15)
+├── Cenario03_RodaARoda.yaml       # encontro de frente        (RIPEAM, Regra 14)
+└── Cenario04_Ultrapassagem.yaml   # alvo mais lento à frente  (RIPEAM, Regra 13)
+```
 
-O Unity ignora as pastas geradas (`Library/`, `Temp/`, `Logs/`) automaticamente.
+**Como rodar a bateria inteira:**
+
+1. `Cenário Real → 1. Construir a partir da Carta`
+2. `Cenário Real → 5. Preparar Bancada por Arquivo (YAML)`
+3. Apague o `TrafegoDinamico` da Hierarchy, se existir — o tráfego ambiente contamina a medição.
+4. **Play** → os cenários rodam em sequência e o resumo sai no Console.
+
+**Saída** (em `Assets/CartaReal/Testes/`, configurável em `output.folder`):
+
+| Arquivo | Conteúdo |
+|---|---|
+| `<bateria>_<data>_execucoes.csv` | uma linha por execução: aprovado, duração, CPA mínimo, colisão |
+| `<bateria>_<data>_cpa.csv` | uma linha por encontro USV × alvo, com CPA e instante |
+| `<bateria>_<data>_resumo.md` | resumo legível, com as reprovações detalhadas |
+| `<cenario>[_seedN].png` | mapa da execução desenhado sobre a carta |
+
+Os números saem sempre com **ponto** decimal, independente do locale da máquina, para os
+CSV abrirem direto no `pandas`/R. Para Excel em português, troque `output.csvSeparator`
+para `";"`.
+
+**Editando a bateria** — tudo em `suite_padrao.yaml`:
+
+```yaml
+scenarios:
+  - file: Cenario02_Cruzamento.yaml     # cenário determinístico de um arquivo
+  - name: Um teste escrito aqui mesmo   # ou declarado direto na suíte
+    usv:
+      startXZ: [9900, 7500]
+    targets:
+      - name: Alvo
+        behaviour: StraightLine
+        startOffsetXZ: [0, 800]
+  - random:                             # estresse: uma execução por semente
+      seeds: [20260813, 20260814]
+      targetCount: [6, 14]
+```
+
+> A **semente** é o que torna um teste aleatório útil: anotada, ela reproduz exatamente as
+> mesmas posições, rotas e velocidades. Ela aparece no CSV, no resumo e no nome do PNG.
+
+Os cenários também existem como *assets* (`Cenário Real → Ferramentas → Criar Cenários de
+Teste`), para editar no Inspector. `Ferramentas → Exportar Cenários para YAML` converte os
+assets em arquivos; `Cenário Real → 4. Preparar Bancada de Testes` roda **um** cenário por vez.
+
+---
+
+## 📦 Baixando o projeto (setup para o time)
+
+> **O código é versionado no GitHub.** Todo trabalho — seu e dos demais — entra por
+> aqui. O Unity Version Control é mantido apenas como registro/arquivo do projeto no
+> CEIA, alimentado a partir do GitHub pelo responsável do módulo. **Não faça check-in
+> direto no Unity VCS:** duas origens de mudança fazem os históricos divergirem e geram
+> conflitos difíceis de resolver.
+
+### 1. Instale o Git LFS (uma vez por máquina)
+
+Os binários do projeto (imagens, modelos `.fbx`, o heightmap da carta) são guardados
+via Git LFS. **Instale antes do primeiro clone**, senão você baixa ponteiros em vez dos
+arquivos:
+
+```bash
+git lfs install
+```
+
+### 2. Clone o repositório
+
+```bash
+git clone https://github.com/CEIA-DGS/SimuladorVSNT.git
+```
+
+Se você clonou antes de instalar o LFS, rode `git lfs pull` dentro da pasta.
+
+### 3. Configure o merge de cenas e prefabs (uma vez por máquina)
+
+Arquivos do Unity (`.unity`, `.prefab`, `.asset`) não se resolvem bem com o merge
+comum do Git. O Unity traz uma ferramenta que entende a estrutura desses arquivos —
+o repositório já a declara no `.gitattributes`, mas cada máquina precisa registrá-la:
+
+```bash
+git config merge.unityyamlmerge.name "Unity SmartMerge"
+git config merge.unityyamlmerge.driver '"C:/Program Files/Unity/Hub/Editor/6000.5.3f1/Editor/Data/Tools/UnityYAMLMerge.exe" merge -p "$BASE" "$REMOTE" "$LOCAL" "$MERGED"'
+```
+
+*(Ajuste o caminho se sua instalação do Unity estiver em outro lugar.)*
+
+### 4. Abra e gere o cenário
+
+Abra a pasta pelo **Unity Hub** (versão `6000.5.3f1`). A primeira abertura demora:
+o Unity regenera a pasta `Library/`, que não é versionada.
+
+O terreno, a água e os obstáculos **não vêm no repositório** — são gerados a partir
+da carta náutica por `Cenário Real → 1. Construir a partir da Carta`. Isso mantém a
+cena versionada leve e evita conflitos: o cenário é sempre reproduzível a partir do
+`heightmap.bytes` e do `metadata.json`.
+
+### 5. Trabalhando no dia a dia
+
+- Crie uma branch por tarefa: `git checkout -b feature/nome-da-tarefa`
+- **Não commite direto na `main`** — abra Pull Request
+- **Não commite a cena com o cenário gerado** (o `CenarioRealGerado` da Hierarchy).
+  Antes de commitar a cena, apague esse objeto e salve.
+- Avise o time quando for mexer na `SampleScene`: cenas conflitam com facilidade,
+  mesmo com o merge inteligente configurado.
 
 ---
 
@@ -135,7 +242,7 @@ Assets/              ← coração do projeto
 ├── Editor/          ← builders e factories (menus do Unity)
 ├── Scenes/          ← cena principal
 ├── CartaReal/       ← dados da carta S-57 (heightmap, metadata, GeoJSON)
-├── Simulador/       ← VesselTypes (ScriptableObjects, "AIS")
+├── Simulador/       ← VesselTypes ("AIS") e Cenarios/ (bateria de testes em YAML)
 └── ...
 Packages/            ← manifest de pacotes
 ProjectSettings/     ← configs do projeto

@@ -40,7 +40,13 @@ public class WaypointManager : MonoBehaviour
         }
     }
 
-    private void Update()
+    /// <summary>
+    /// Runs on the physics step (not per frame) so the waypoint transitions stay in
+    /// lockstep with UsvController/UsvDynamics. This keeps a scenario reproducible:
+    /// the same run always switches segments at the same simulated instant,
+    /// regardless of frame rate.
+    /// </summary>
+    private void FixedUpdate()
     {
         if (!IsMissionActive || path == null) return;
 

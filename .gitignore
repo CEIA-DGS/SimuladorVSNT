@@ -73,3 +73,13 @@ desktop.ini
 #  IMPORTANTE: os arquivos .meta DEVEM ser versionados.
 #  Não adicione "*.meta" aqui — o Unity depende deles (GUIDs).
 # ============================================================
+
+# --- Documentacao interna (nao versionada, fica so na maquina) ---
+/docs-internos/
+
+# --- Resultados das baterias de teste (gerados a cada execucao) ---
+# Cada rodada escreve 3 CSV, 1 resumo e 1 PNG por cenario. Sao saida, nao fonte:
+# a pasta e recriada sozinha na primeira execucao. O .meta da pasta vai junto,
+# porque fica fora dela.
+/Assets/CartaReal/Testes/
+/Assets/CartaReal/Testes.meta
