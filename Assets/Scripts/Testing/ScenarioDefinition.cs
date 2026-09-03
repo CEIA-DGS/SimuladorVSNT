@@ -27,32 +27,42 @@ namespace MaritimeScenario.Testing
     [Serializable]
     public class TargetSpec
     {
+        /// <summary>Target name, shown in the scene and in the report.</summary>
         [Tooltip("Nome do alvo (aparece na cena e no relatório).")]
         public string Name = "Target";
 
+        /// <summary>Start position in meters, relative to the USV start (X is East, Z is North).</summary>
         [Tooltip("Posição inicial em metros, RELATIVA ao ponto de partida do USV (X = Leste, Z = Norte).")]
         public Vector2 StartOffsetXZ = new Vector2(0f, 500f);
 
+        /// <summary>Initial heading in degrees, with 0 at North and 90 at East.</summary>
         [Tooltip("Rumo inicial em graus (0 = Norte, 90 = Leste).")]
         public float HeadingDegrees = 180f;
 
+        /// <summary>Speed in knots. Ignored when the behaviour is Static.</summary>
         [Tooltip("Velocidade em nós. Ignorado quando o comportamento é Static.")]
         public float SpeedKnots = 10f;
 
+        /// <summary>How the target behaves during the scenario.</summary>
         [Tooltip("Comportamento do alvo durante o cenário.")]
         public TargetBehaviour Behaviour = TargetBehaviour.StraightLine;
 
+        /// <summary>Route of the target, in meters relative to the USV start. Route behaviour only; the first point is the spawn.</summary>
         [Tooltip("Rota própria do alvo, em metros RELATIVOS ao ponto de partida do USV. " +
                  "Usada apenas quando o comportamento é Route; o primeiro ponto é o spawn.")]
         public List<Vector2> RouteOffsetsXZ = new List<Vector2>();
 
+        /// <summary>Whether the target repeats its route on reaching the end. Route behaviour only.</summary>
         [Tooltip("Se o alvo repete a rota em laço ao chegar ao fim (só para Route).")]
         public bool LoopRoute = true;
 
         [Header("Dimensões (m)")]
+        /// <summary>Hull length in meters. Together with the beam it sets the distance counted as contact.</summary>
         public float Length = 40f;
+        /// <summary>Hull beam, in meters.</summary>
         public float Beam = 10f;
 
+        /// <summary>Hull colour, used only to tell the targets apart visually.</summary>
         [Tooltip("Cor do casco, só para diferenciar os alvos visualmente.")]
         public Color HullColor = new Color(0.70f, 0.25f, 0.20f);
 
@@ -77,30 +87,37 @@ namespace MaritimeScenario.Testing
     public class ScenarioDefinition : ScriptableObject
     {
         [Header("Identificação")]
+        /// <summary>Short name of the scenario, shown in the report and used in the exported file names.</summary>
         [Tooltip("Nome curto do cenário (aparece no relatório).")]
         public string DisplayName = "Cenário";
 
+        /// <summary>What this scenario tests and which reaction is expected from the USV.</summary>
         [TextArea(2, 4)]
         [Tooltip("O que este cenário testa e qual reação se espera do USV.")]
         public string Description = "";
 
         [Header("USV")]
+        /// <summary>Start position of the USV in scene coordinates. Every target position and waypoint is relative to it.</summary>
         [Tooltip("Ponto de partida do USV em coordenadas locais da cena (X = Leste, Z = Norte). " +
                  "Todas as posições de alvo e waypoints são relativas a este ponto.")]
         public Vector2 UsvStartXZ = new Vector2(9900f, 7500f);
 
+        /// <summary>Initial heading of the USV in degrees, with 0 at North and 90 at East.</summary>
         [Tooltip("Rumo inicial do USV em graus (0 = Norte, 90 = Leste).")]
         public float UsvStartHeadingDegrees = 0f;
 
+        /// <summary>Desired cruise speed, in knots.</summary>
         [Tooltip("Velocidade de cruzeiro desejada, em nós.")]
         public float UsvCruiseSpeedKnots = 12f;
 
         [Header("Rota do USV")]
+        /// <summary>Whether the simulation itself publishes the route. Turn it off when the waypoints come from outside, such as from ROS.</summary>
         [Tooltip("Se a própria simulação publica a rota no WaypointManager. Desligue quando os " +
                  "waypoints vierem de fora (ex.: do ROS) — é o caso dos cenários de estresse, " +
                  "onde o que importa é o tráfego aleatório e não a rota pré-definida.")]
         public bool PublishWaypoints = true;
 
+        /// <summary>Waypoints in meters, relative to the USV start. At least two are needed for a route to be followed.</summary>
         [Tooltip("Waypoints em metros, RELATIVOS ao ponto de partida do USV. " +
                  "O primeiro ponto costuma ser (0,0) — a própria partida.")]
         public List<Vector2> WaypointOffsetsXZ = new List<Vector2>
@@ -110,12 +127,15 @@ namespace MaritimeScenario.Testing
         };
 
         [Header("Alvos")]
+        /// <summary>The targets the USV has to react to.</summary>
         public List<TargetSpec> Targets = new List<TargetSpec>();
 
         [Header("Critérios")]
+        /// <summary>Maximum simulated time, in seconds. The run ends when the limit is reached.</summary>
         [Tooltip("Tempo máximo de simulação, em segundos. O cenário encerra ao atingir este limite.")]
         public float MaxDurationSeconds = 180f;
 
+        /// <summary>Minimum safety distance, in meters. Passing closer than this to a target fails the run.</summary>
         [Tooltip("Distância mínima de segurança, em metros. Passar mais perto que isso de um alvo " +
                  "conta como falha (o valor típico de CPA aceitável depende da via navegável).")]
         public float MinSafeDistanceMeters = 100f;

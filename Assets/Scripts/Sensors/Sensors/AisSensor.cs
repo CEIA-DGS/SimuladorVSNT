@@ -5,11 +5,14 @@ using System.Collections.Generic;
 public class AisSensor : BaseSensor<AisData>
 {
     [Header("AIS Receiver Settings")]
+    /// <summary>Maximum VHF radio range, in meters. 37000 m is roughly 20 nautical miles.</summary>
     [Tooltip("Alcance máximo do rádio VHF em metros (Ex: 37000m = ~20 Milhas Náuticas)")]
     public float maxRangeMeters = 37000f;
 
     [Header("World Anchor (Compartilhado com GPS)")]
+    /// <summary>Latitude of the scene origin, used to convert positions to geographic coordinates.</summary>
     public double originLatitude = -15.8021;
+    /// <summary>Longitude of the scene origin, used to convert positions to geographic coordinates.</summary>
     public double originLongitude = -47.8569;
 
     protected override AisData GenerateRawData()

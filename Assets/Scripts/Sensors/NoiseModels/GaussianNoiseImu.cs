@@ -3,12 +3,15 @@ using UnityEngine;
 public class GaussianNoiseImu : BaseNoiseModel<ImuData>
 {
     [Header("IMU Noise (Desvio Padrão)")]
+    /// <summary>Standard deviation of the linear acceleration noise, in meters per second squared.</summary>
     [Tooltip("Ruído da Aceleração Linear (m/s²)")]
     public float accelStdDev = 0.05f;
     
+    /// <summary>Standard deviation of the angular velocity noise, in radians per second.</summary>
     [Tooltip("Ruído da Velocidade Angular (rad/s)")]
     public float gyroStdDev = 0.005f;
     
+    /// <summary>Standard deviation of the orientation noise, in radians.</summary>
     [Tooltip("Ruído da Orientação (radianos)")]
     public float orientationStdDev = 0.01f;
 

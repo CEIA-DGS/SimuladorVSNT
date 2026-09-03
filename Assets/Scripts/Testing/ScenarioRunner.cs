@@ -23,42 +23,52 @@ namespace MaritimeScenario.Testing
     public class ScenarioRunner : MonoBehaviour
     {
         [Header("Modo de teste")]
+        /// <summary>Cleared runs the deterministic scenario chosen below; set draws a stress scenario from the generator.</summary>
         [Tooltip("DESMARCADO: roda o cenário determinístico escolhido abaixo (encontros padrão).\n" +
                  "MARCADO: sorteia um cenário de estresse com tráfego aleatório, usando a semente " +
                  "do componente Random Scenario Generator.")]
         public bool UseRandomGenerator = false;
 
         [Header("Cenário")]
+        /// <summary>The scenario to run. Used when the random mode is off.</summary>
         [Tooltip("O cenário de teste a executar. Usado quando o modo aleatório está desmarcado.")]
         public ScenarioDefinition Scenario;
 
+        /// <summary>Generator used in random mode. Empty looks for the component on this object.</summary>
         [Tooltip("Gerador usado no modo aleatório. Se ficar vazio, procura o componente " +
                  "no próprio objeto.")]
         public RandomScenarioGenerator Generator;
 
+        /// <summary>Whether the run starts automatically on entering Play.</summary>
         [Tooltip("Executa automaticamente ao entrar em Play.")]
         public bool RunOnStart = true;
 
         [Header("USV")]
+        /// <summary>The USV under test. Empty searches the scene for the first one found.</summary>
         [Tooltip("O USV a testar. Se vazio, procura na cena pelo primeiro que encontrar.")]
         public Transform Usv;
 
         [Header("Determinismo")]
+        /// <summary>Seed applied to the global random generator, so that any incidental use of it, such as sensor noise, repeats between runs.</summary>
         [Tooltip("Semente fixa aplicada ao gerador aleatório, para que qualquer uso incidental de " +
                  "Random (ex.: ruído dos sensores) se repita igual entre execuções.")]
         public int RandomSeed = 12345;
 
+        /// <summary>Physics step, in seconds. 0.02 is 50 Hz.</summary>
         [Tooltip("Passo fixo de física, em segundos. 0.02 = 50 Hz (padrão do Unity).")]
         public float FixedTimeStep = 0.02f;
 
         [Header("Relatório")]
+        /// <summary>Whether a PNG map of the run is drawn over the chart at the end.</summary>
         [Tooltip("Gera um mapa PNG do teste ao final, desenhado sobre a carta da região.")]
         public bool ExportMap = true;
 
+        /// <summary>Folder where the maps are written, relative to the project root.</summary>
         [Tooltip("Pasta onde os mapas são salvos, relativa à raiz do projeto.")]
         public string MapOutputFolder = "Assets/CartaReal/Testes";
 
         [Header("Ambiente")]
+        /// <summary>Water level (Y) where the USV and the targets are placed.</summary>
         [Tooltip("Altura da água (Y) onde o USV e os alvos são posicionados. " +
                  "0.05 é a altura da malha de água criada pelo builder do cenário real.")]
         public float WaterHeight = 0.05f;

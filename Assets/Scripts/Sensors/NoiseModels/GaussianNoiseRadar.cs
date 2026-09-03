@@ -3,6 +3,7 @@ using UnityEngine;
 public class GaussianNoiseRadar : BaseNoiseModel<RadarData>
 {
     [Header("Radar Noise")]
+    /// <summary>Standard deviation of the range error, in meters.</summary>
     [Tooltip("Desvio padrão da precisão da distância (m)")]
     public float distanceStdDev = 0.03f; // Ex: precisão de 3cm
 

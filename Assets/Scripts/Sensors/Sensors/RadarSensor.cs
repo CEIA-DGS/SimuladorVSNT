@@ -3,12 +3,16 @@ using UnityEngine;
 public class RadarSensor : BaseSensor<RadarData>
 {
     [Header("Radar/LiDAR Settings")]
+    /// <summary>Number of rays in one full scan.</summary>
     [Range(360, 2000)]
     public int numSamples = 1440;
+    /// <summary>Longest distance the scan reports, in meters.</summary>
     public float maxRange = 30f;
+    /// <summary>Shortest distance the scan reports, in meters.</summary>
     public float minRange = 0.1f;
     
     [Header("Visual Debug")]
+    /// <summary>Whether the rays are drawn in the Scene view.</summary>
     public bool showDebugRays = false;
 
     private float lastScanTime;

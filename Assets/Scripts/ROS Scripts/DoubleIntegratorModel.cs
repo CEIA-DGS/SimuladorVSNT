@@ -7,9 +7,11 @@ using RosMessageTypes.Geometry;
 public class DoubleIntegratorModel : MonoBehaviour
 {
     [Header("ROS Configuration")]
+    /// <summary>ROS topic the acceleration command is read from.</summary>
     public string topicAccelName = "/cmd_accel";
     
     [Header("Settings")]
+    /// <summary>Whether the command is interpreted in the frame of the vehicle instead of the world frame.</summary>
     public bool useLocalFrame = true; 
 
     private Rigidbody rb;

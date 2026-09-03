@@ -5,7 +5,9 @@ using RosMessageTypes.Sensor;
 public class RosGpsPublisher : BasePublisher<GpsData>
 {
     [Header("ROS Setup")]
+    /// <summary>ROS topic the GPS fix is published on.</summary>
     public string topicName = "/gps/fix";
+    /// <summary>Frame of reference stamped on the published fix.</summary>
     public string frameId = "gps_link";
 
     private ROSConnection ros;

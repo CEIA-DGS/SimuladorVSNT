@@ -19,8 +19,11 @@ namespace MaritimeScenario.EditorTools
 
         struct Rota
         {
+            /// <summary>Hull style that filters which vessel types may be drawn for this route.</summary>
             public HullStyle estilo;      // filters which VesselType assets can use this route
+            /// <summary>Minimum depth required along the route, in meters, so no vessel is placed in shallow water.</summary>
             public float minProf;          // minimum required depth (m)
+            /// <summary>How many vessels travel this route.</summary>
             public int quantidade;         // vessels on this route
             public (float fx, float fz)[] wp; // waypoints as a fraction of the domain (0..1)
         }

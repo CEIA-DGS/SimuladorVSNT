@@ -15,16 +15,24 @@ namespace MaritimeScenario.Boat
     /// </summary>
     public class DynamicVessel : MonoBehaviour
     {
+        /// <summary>Route in absolute scene coordinates, travelled in order.</summary>
         public List<Vector3> Waypoints = new();
+        /// <summary>Travel speed, in meters per second.</summary>
         public float Speed = 5f;   // m/s
+        /// <summary>Whether the vessel restarts the route after the last waypoint.</summary>
         public bool Loop = true;
+        /// <summary>Y coordinate of the water surface where the vessel is kept.</summary>
         public float WaterHeight = 0f;
+        /// <summary>Starting distance along the route, in meters. Spreads several vessels over the same route.</summary>
         [Tooltip("Distância inicial ao longo da rota (m) — espalha vários barcos na mesma rota.")]
         public float InitialDistance = 0f;
 
         [Header("Dimensões (vetor de estado / colisão)")]
+        /// <summary>Hull length in meters. Part of the state published to other systems.</summary>
         public float Length = 20f;
+        /// <summary>Hull beam, in meters.</summary>
         public float Beam = 6f;
+        /// <summary>Vessel category label, used in reports and in the AIS-style state.</summary>
         public string Kind = "vessel";
 
         // ---- exposed dynamic state ----

@@ -5,7 +5,9 @@ using RosMessageTypes.Sensor;
 public class RosRadarPublisher : BasePublisher<RadarData>
 {
     [Header("ROS Setup")]
+    /// <summary>ROS topic the radar scan is published on.</summary>
     public string topicName = "/scan";
+    /// <summary>Frame of reference stamped on the published scan.</summary>
     public string frameId = "lidar_link";
 
     private ROSConnection ros;

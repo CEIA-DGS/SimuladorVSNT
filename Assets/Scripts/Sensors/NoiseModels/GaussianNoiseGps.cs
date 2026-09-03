@@ -3,7 +3,9 @@ using UnityEngine;
 public class GaussianNoiseGps : BaseNoiseModel<GpsData>
 {
     [Header("GPS Noise (Metros)")]
+    /// <summary>Standard deviation of the horizontal position error, in meters.</summary>
     public float horizontalStdDev = 1.5f; 
+    /// <summary>Standard deviation of the vertical position error, in meters.</summary>
     public float verticalStdDev = 3.0f;
 
     public override GpsData ApplyNoise(GpsData data)

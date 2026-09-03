@@ -8,17 +8,25 @@ using RosMessageTypes.Tf2;
 public class OdomPublisher : MonoBehaviour
 {
     [Header("ROS Connection")]
+    /// <summary>ROS topic the odometry is published on.</summary>
     public string topicOdometryName = "/ground_truth/odom";
+    /// <summary>ROS topic the coordinate transform is published on.</summary>
     public string topicTFName = "/tf";
     
     [Header("Frame IDs")]
+    /// <summary>Name of the fixed reference frame.</summary>
     public string frameId = "map";
+    /// <summary>Name of the frame attached to the vehicle.</summary>
     public string childFrameId = "base_link";
     
     [Header("Publish Options")]
+    /// <summary>Whether the odometry message is published.</summary>
     public bool publishOdometry = true;
+    /// <summary>Whether the coordinate transform is published.</summary>
     public bool publishTF = true;
+    /// <summary>Publication rate, in hertz.</summary>
     public float publishFrequency = 30.0f;
+    /// <summary>Whether the pose is reported in world coordinates instead of relative to the start.</summary>
     public bool useGlobalPose = false;
 
     private Rigidbody rb;

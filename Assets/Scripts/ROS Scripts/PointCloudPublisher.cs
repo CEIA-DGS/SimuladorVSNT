@@ -7,14 +7,21 @@ using RosMessageTypes.Std;    // HeaderMsg
 public class PointCloudPublisher : MonoBehaviour
 {
     [Header("ROS Configuration")]
+    /// <summary>ROS topic the point cloud is published on.</summary>
     public string topicName = "/camera/depth/points";
+    /// <summary>Frame of reference stamped on the published cloud.</summary>
     public string frameId = "camera_link";
+    /// <summary>Time between publications, in seconds. Point clouds are heavy, so the period is kept long.</summary>
     public float publishMessagePeriod = 1/10.0f; // PointClouds são pesadas, 10Hz é comum
+    /// <summary>Whether the points are reported in world coordinates.</summary>
     public bool useGlobalPose = false;
 
     [Header("Capture Settings")]
+    /// <summary>Camera used to render the depth image the cloud is built from.</summary>
     public Camera captureCamera;
+    /// <summary>Render texture that receives the depth image.</summary>
     public RenderTexture depthRT;
+    /// <summary>Longest distance represented in the depth image, in meters. Matches the far plane or the shader scale.</summary>
     public float maxDepth = 1000.0f; // Seu Far Plane ou escala do Shader
 
     private ROSConnection ros;

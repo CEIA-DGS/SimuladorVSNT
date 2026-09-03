@@ -24,66 +24,85 @@ namespace MaritimeScenario.Testing
     public class RandomScenarioGenerator : MonoBehaviour
     {
         [Header("Semente")]
+        /// <summary>Global seed. The same number reproduces the exact same scenario, which is what makes a failed run debuggable.</summary>
         [Tooltip("Semente global. O mesmo número reproduz exatamente o mesmo cenário. " +
                  "Anote a semente de uma execução que falhou para depurá-la depois.")]
         public int Seed = 20260813;
 
         [Header("Área de geração")]
+        /// <summary>Centre of the area where targets may spawn, in scene coordinates. Zero uses the USV start position.</summary>
         [Tooltip("Centro da área onde os alvos podem nascer, em coordenadas locais da cena. " +
                  "Se ficar em zero, usa a posição de partida do USV.")]
         public Vector2 AreaCenterXZ = Vector2.zero;
 
+        /// <summary>Radius of the spawn area, in meters.</summary>
         [Tooltip("Raio da área de geração, em metros.")]
         public float AreaRadius = 2000f;
 
+        /// <summary>Closest a target may spawn to the USV, in meters. Keeps a run from starting already in collision.</summary>
         [Tooltip("Distância mínima do USV em que um alvo pode nascer, em metros. " +
                  "Evita que o cenário comece já em cima de uma colisão.")]
         public float MinDistanceFromUsv = 300f;
 
         [Header("Quantidade de alvos")]
+        /// <summary>Fewest targets a generated scenario may contain.</summary>
         [Min(0)] public int MinTargets = 6;
+        /// <summary>Most targets a generated scenario may contain.</summary>
         [Min(0)] public int MaxTargets = 14;
 
         [Header("Faixas dos alvos")]
+        /// <summary>Target speed range in knots, as (minimum, maximum).</summary>
         [Tooltip("Faixa de velocidade dos alvos, em nós (mín, máx).")]
         public Vector2 SpeedRangeKnots = new Vector2(4f, 16f);
 
+        /// <summary>Target length range in meters, as (minimum, maximum).</summary>
         [Tooltip("Faixa de comprimento dos alvos, em metros (mín, máx).")]
         public Vector2 LengthRangeMeters = new Vector2(15f, 120f);
 
+        /// <summary>Fraction of targets that stay still. Zero means all move, one means all are anchored.</summary>
         [Tooltip("Proporção de alvos parados (0 = todos se movem, 1 = todos parados).")]
         [Range(0f, 1f)] public float StaticTargetRatio = 0.15f;
 
         [Header("Rotas dos alvos")]
+        /// <summary>Fewest waypoints in the route of a moving target.</summary>
         [Min(2)] public int MinRoutePoints = 2;
+        /// <summary>Most waypoints in the route of a moving target.</summary>
         [Min(2)] public int MaxRoutePoints = 4;
 
+        /// <summary>Length of each leg of a target route, in meters, as (minimum, maximum).</summary>
         [Tooltip("Comprimento típico de cada perna da rota, em metros (mín, máx).")]
         public Vector2 LegLengthMeters = new Vector2(400f, 1500f);
 
         [Header("Cenário gerado")]
+        /// <summary>Start position of the USV in the generated scenario.</summary>
         [Tooltip("Ponto de partida do USV no cenário gerado.")]
         public Vector2 UsvStartXZ = new Vector2(9900f, 7500f);
 
+        /// <summary>Whether the generated scenario also publishes a route for the USV. Without a route the USV stands still and the run measures nothing.</summary>
         [Tooltip("Se o cenário gerado deve publicar uma rota aleatória para o USV. Ligado, o USV " +
                  "navega através do tráfego — que é o que se quer medir num teste de estresse. " +
                  "Desligue apenas quando os waypoints vierem de fora (ROS); sem rota o USV fica parado.")]
         public bool PublishUsvWaypoints = true;
 
+        /// <summary>Maximum simulated time of the generated scenario, in seconds.</summary>
         [Tooltip("Duração máxima do cenário gerado, em segundos.")]
         public float MaxDurationSeconds = 300f;
 
+        /// <summary>Safety distance used to judge the result, in meters.</summary>
         [Tooltip("Distância mínima de segurança usada para avaliar o resultado, em metros.")]
         public float MinSafeDistanceMeters = 100f;
 
         [Header("Água navegável")]
+        /// <summary>Terrain collider used to keep targets off land. Empty searches the scene for the chart terrain.</summary>
         [Tooltip("Colisor do terreno, usado para garantir que nenhum alvo nasça em terra. " +
                  "Se vazio, procura por 'TerrenoCarta' na cena.")]
         public Collider TerrainCollider;
 
+        /// <summary>Terrain height (Y) above which the ground counts as land.</summary>
         [Tooltip("Acima desta altura (Y do terreno) considera-se terra firme.")]
         public float LandHeightThreshold = 0.3f;
 
+        /// <summary>Draws attempted per point before giving up on finding navigable water.</summary>
         [Tooltip("Tentativas de sorteio por ponto antes de desistir de achar água.")]
         [Min(1)] public int WaterSearchAttempts = 30;
 

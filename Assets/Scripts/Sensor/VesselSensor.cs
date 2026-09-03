@@ -17,9 +17,13 @@ namespace MaritimeScenario.Sensor
     public class VesselSensor : MonoBehaviour
     {
         [Header("Sensor")]
+        /// <summary>Detection range, in meters.</summary>
         public float Range = 3500f;             // m
+        /// <summary>Time between scans, in seconds.</summary>
         public float ScanInterval = 0.25f;       // s (4x/s)
+        /// <summary>Time without a sighting, in seconds, after which the contact is dropped.</summary>
         public float ForgetTime = 3f;            // s without a sighting -> remove
+        /// <summary>Whether land between the sensor and the target blocks detection.</summary>
         public bool UseOcclusion = true;         // land blocks detection
 
         // Keyed by the vessel reference, not by GetInstanceID (obsolete in Unity 6.5).

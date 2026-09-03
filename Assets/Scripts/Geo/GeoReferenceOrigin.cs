@@ -16,12 +16,15 @@ namespace MaritimeScenario.Geo
     public class GeoReferenceOrigin : MonoBehaviour, IGeoReference
     {
         [Header("Origem geográfica fictícia (ponto Unity (0,0,0))")]
+        /// <summary>Datum latitude in decimal degrees (WGS84). Negative is South.</summary>
         [Tooltip("Latitude do datum, em graus decimais (WGS84). Negativo = Sul.")]
         public double OriginLatitudeDeg = -23.083000;
 
+        /// <summary>Datum longitude in decimal degrees (WGS84). Negative is West.</summary>
         [Tooltip("Longitude do datum, em graus decimais (WGS84). Negativo = Oeste.")]
         public double OriginLongitudeDeg = -44.300000;
 
+        /// <summary>Equatorial radius of the Earth in the WGS84 datum, in meters.</summary>
         public const double EarthRadiusMeters = 6378137.0; // WGS84 equatorial radius
 
         /// <summary>Most recently enabled instance, for convenient global access.</summary>

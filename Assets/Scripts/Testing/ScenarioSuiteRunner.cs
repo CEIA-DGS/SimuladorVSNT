@@ -21,16 +21,20 @@ namespace MaritimeScenario.Testing
     public class ScenarioSuiteRunner : MonoBehaviour
     {
         [Header("Arquivo de configuração")]
+        /// <summary>YAML file describing the battery, relative to the project root.</summary>
         [Tooltip("Arquivo YAML da bateria de testes, relativo à raiz do projeto.")]
         public string SuiteFile = "Assets/Simulador/Cenarios/suite_padrao.yaml";
 
+        /// <summary>Whether the battery starts automatically on entering Play.</summary>
         [Tooltip("Executa a bateria automaticamente ao entrar em Play.")]
         public bool RunOnStart = true;
 
         [Header("Componentes")]
+        /// <summary>Component that executes one scenario. Empty looks for it on this object.</summary>
         [Tooltip("Executor de um cenário. Se ficar vazio, procura no próprio objeto.")]
         public ScenarioRunner Runner;
 
+        /// <summary>Generator used by the random entries of the battery. Empty looks for it on this object.</summary>
         [Tooltip("Gerador usado pelas entradas aleatórias da suíte. Se ficar vazio, " +
                  "procura no próprio objeto.")]
         public RandomScenarioGenerator Generator;

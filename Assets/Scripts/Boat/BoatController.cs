@@ -15,24 +15,35 @@ namespace MaritimeScenario.Boat
     /// </summary>
     public class BoatController : MonoBehaviour
     {
+        /// <summary>Forward speed, in meters per second.</summary>
         public float Speed = 10f;
+        /// <summary>Turn rate, in degrees per second.</summary>
         public float TurnSpeed = 70f;
+        /// <summary>Height the hull floats above the water surface, in meters.</summary>
         public float BuoyancyHeight = 0.5f;
+        /// <summary>Whether the on-screen speed and heading readout is drawn.</summary>
         public bool ShowHud = true;
 
         [Header("Limite de terra")]
+        /// <summary>Terrain height (Y) above which the ground counts as land; the boat refuses to enter it.</summary>
         [Tooltip("Acima desta altura (Y do terreno) é considerado terra firme — o barco não entra.")]
         public float LandHeightThreshold = 0.3f;
+        /// <summary>Terrain collider used to read the ground height under the boat. Empty disables the land limit.</summary>
         [Tooltip("Colisor do terreno usado para checar a altura embaixo do barco. Se vazio, o limite de terra fica desativado.")]
         public Collider TerrainCollider;
 
         [Header("Casco (para a flutuação)")]
+        /// <summary>Hull length in meters, used to sample the wave at bow and stern.</summary>
         public float Length = 4.5f;
+        /// <summary>Hull beam in meters, used to sample the wave to port and starboard.</summary>
         public float Beam = 2.2f;
 
         [Header("Onda (deve bater com a Água)")]
+        /// <summary>Wave amplitude in meters. Must match the water material, otherwise the hull floats off the surface.</summary>
         public float WaveAmplitude = 0.15f;
+        /// <summary>Spatial frequency of the wave. Must match the water material.</summary>
         public float WaveScale = 0.05f;
+        /// <summary>Travel speed of the wave. Must match the water material.</summary>
         public float WaveSpeed = 0.6f;
 
         IGeoReference geo;

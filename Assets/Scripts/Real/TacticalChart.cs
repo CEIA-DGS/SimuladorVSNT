@@ -16,12 +16,17 @@ namespace MaritimeScenario.Real
     [RequireComponent(typeof(Camera))]
     public class TacticalChart : MonoBehaviour
     {
+        /// <summary>Transform the chart follows in follow mode, normally the USV.</summary>
         public Transform Target;
+        /// <summary>Half-height of the visible area when following the target, in meters.</summary>
         public float FollowViewSize = 180f;   // half-height of the view when following (m)
+        /// <summary>Height at which the chart camera sits above the scene, in meters.</summary>
         public float Altitude = 600f;
 
         [Header("Carta (visão geral)")]
+        /// <summary>Depth-coloured image of the region, produced by the scenario builder.</summary>
         public Texture2D ChartImage;    // depth-colored image (from the builder)
+        /// <summary>Ground size covered by the chart image, in meters, as (width, height).</summary>
         public Vector2 WorldSize = new Vector2(20000f, 15000f); // size of the covered world (m)
 
         Camera cam;

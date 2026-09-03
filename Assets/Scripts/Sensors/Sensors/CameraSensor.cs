@@ -5,7 +5,9 @@ using UnityEngine;
 public class CameraSensor : BaseSensor<CameraData>
 {
     [Header("Resolution Settings")]
+    /// <summary>Width of the captured image, in pixels.</summary>
     public int width = 640;
+    /// <summary>Height of the captured image, in pixels.</summary>
     public int height = 480;
 
     private Camera cam;

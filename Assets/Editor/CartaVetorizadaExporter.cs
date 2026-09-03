@@ -24,9 +24,13 @@ namespace MaritimeScenario.EditorTools
     {
         class Config
         {
+            /// <summary>Name of the GameObject holding the terrain mesh to vectorize.</summary>
             public string nomeMalha;      // name of the terrain mesh's GameObject
+            /// <summary>Vertical exaggeration applied when the terrain was built, undone here to recover real depths.</summary>
             public float exagero;         // vertical exaggeration applied to the mesh (to recover the real depth)
+            /// <summary>Path of the SVG file to write, relative to the project root.</summary>
             public string saidaSvg;
+            /// <summary>Path of the georeferenced GeoJSON file to write, relative to the project root.</summary>
             public string saidaGeojson;
             public List<(Vector3 pos, string tipo)> obstaculos;
         }

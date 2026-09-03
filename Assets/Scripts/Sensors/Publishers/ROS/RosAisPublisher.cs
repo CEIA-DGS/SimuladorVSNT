@@ -5,7 +5,9 @@ using RosMessageTypes.Dt;
 public class RosAisPublisher : BasePublisher<AisData>
 {
     [Header("ROS Setup")]
+    /// <summary>ROS topic the AIS report is published on.</summary>
     public string topicName = "/ais/report";
+    /// <summary>Frame of reference stamped on the published report.</summary>
     public string frameId = "ais_antenna_link";
 
     private ROSConnection ros;

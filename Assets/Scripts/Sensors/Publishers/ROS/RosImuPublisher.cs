@@ -6,7 +6,9 @@ using RosMessageTypes.Sensor;
 public class RosImuPublisher : BasePublisher<ImuData>
 {
     [Header("ROS Setup")]
+    /// <summary>ROS topic the inertial reading is published on.</summary>
     public string topicName = "/imu/data";
+    /// <summary>Frame of reference stamped on the published reading.</summary>
     public string frameId = "imu_link";
 
     private ROSConnection ros;

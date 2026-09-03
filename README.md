@@ -174,6 +174,38 @@ assets em arquivos; `Cenário Real → 4. Preparar Bancada de Testes` roda **um*
 
 ---
 
+## 📚 Documentação dos parâmetros (Doxygen)
+
+Todo parâmetro ajustável do ambiente — Inspector, arquivos YAML e menus do Editor — está
+documentado no próprio código e sai em formato web pelo Doxygen.
+
+**Instalar (uma vez por máquina):**
+
+```bash
+winget install DimitriVanHeesch.Doxygen
+```
+
+**Gerar**, a partir da raiz do repositório:
+
+```bash
+doxygen Doxyfile
+```
+
+Abrir `docs-gerados/html/index.html` no navegador. A página inicial é um guia por
+subsistema — embarcação, ambiente, percepção, ROS, bancada de testes e menus do Editor —
+com as convenções de coordenadas, rumos e unidades.
+
+A pasta `docs-gerados/` **não é versionada**: como a documentação sai do código, regenerar
+é mais barato que versionar, e assim ela nunca fica defasada. A configuração fica no
+`Doxyfile`, com caminhos relativos, e a página inicial em
+[Docs/DOXYGEN_MAINPAGE.md](Docs/DOXYGEN_MAINPAGE.md).
+
+> O Graphviz é opcional. Sem ele os diagramas de herança não são gerados, o que não afeta
+> a referência de parâmetros. Para habilitá-los, instale o Graphviz e mude `HAVE_DOT` para
+> `YES` no `Doxyfile`.
+
+---
+
 ## 📦 Baixando o projeto (setup para o time)
 
 > **O código é versionado no GitHub.** Todo trabalho — seu e dos demais — entra por

@@ -13,9 +13,13 @@ namespace MaritimeScenario.EditorTools
     /// </summary>
     public static class EmbarcacaoFactory
     {
+        /// <summary>Hull length of the real VSNT/DGS-15, in meters.</summary>
         public const float COMPRIMENTO = 4.5f;
+        /// <summary>Hull beam of the real VSNT/DGS-15, in meters.</summary>
         public const float LARGURA = 2.0f;
+        /// <summary>Draught of the real VSNT/DGS-15, in meters.</summary>
         public const float CALADO = 0.55f;
+        /// <summary>Mast height of the real VSNT/DGS-15 above the waterline, in meters.</summary>
         public const float ALTURA_MASTRO = 2.30f;
 
         static Material Lit(Color cor, float smoothness = 0.4f, float metallic = 0f)

@@ -9,9 +9,13 @@ namespace MaritimeScenario.Boat
     /// </summary>
     public class ChaseCamera : MonoBehaviour
     {
+        /// <summary>Transform the camera follows, normally the USV.</summary>
         public Transform Target;
+        /// <summary>Camera position relative to the target, in the frame of the target.</summary>
         public Vector3 Offset = new Vector3(0f, 2.2f, -6f);
+        /// <summary>Height offset of the aim point, so the camera looks at the deck instead of the waterline.</summary>
         public Vector3 LookAtHeight = new Vector3(0f, 1f, 0f);
+        /// <summary>How quickly the camera catches up with the target. Higher is stiffer.</summary>
         public float SmoothSpeed = 4f;
 
         /// <summary>

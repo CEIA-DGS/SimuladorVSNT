@@ -3,6 +3,7 @@ using UnityEngine;
 public abstract class BasePublisher<T> : MonoBehaviour
 {
     [Header("Publisher Settings")]
+    /// <summary>Publication rate, in hertz.</summary>
     [Tooltip("Frequência de publicação em Hertz (Hz)")]
     public float publishFrequency = 10f;
     

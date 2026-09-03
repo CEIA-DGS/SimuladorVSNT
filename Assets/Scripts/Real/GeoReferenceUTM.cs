@@ -19,14 +19,21 @@ namespace MaritimeScenario.Real
     public class GeoReferenceUTM : MonoBehaviour, IGeoReference
     {
         [Header("Origem UTM (canto SW da carta)")]
+        /// <summary>UTM easting of the scene origin, in meters.</summary>
         public double OriginE;
+        /// <summary>UTM northing of the scene origin, in meters.</summary>
         public double OriginN;
+        /// <summary>UTM zone number of the chart.</summary>
         public int UtmZone = 23;
+        /// <summary>Whether the chart lies in the southern hemisphere.</summary>
         public bool UtmSouth = true;
 
         [Header("Referência (só informativo)")]
+        /// <summary>Latitude of the scene origin, in decimal degrees.</summary>
         public double OriginLat;
+        /// <summary>Longitude of the scene origin, in decimal degrees.</summary>
         public double OriginLon;
+        /// <summary>Name of the nautical chart this reference was taken from.</summary>
         public string ChartName = "";
 
         /// <summary>Most recently enabled instance, for convenient global access.</summary>

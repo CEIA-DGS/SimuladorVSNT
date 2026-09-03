@@ -12,10 +12,13 @@ namespace MaritimeScenario.Chart
     /// </summary>
     public class ChartFeatureSource : MonoBehaviour
     {
+        /// <summary>Area features of the chart, such as land and depth areas.</summary>
         public List<ChartFeature> Polygons = new();
+        /// <summary>Point features of the chart, such as buoys and rocks.</summary>
         public List<ChartPointFeature> Points = new();
 
         [Header("Desenho de depuração (Scene view)")]
+        /// <summary>Whether the features are outlined in the Scene view.</summary>
         public bool DrawGizmos = true;
 
         /// <summary>

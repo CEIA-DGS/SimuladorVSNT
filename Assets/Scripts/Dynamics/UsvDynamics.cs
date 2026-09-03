@@ -8,15 +8,23 @@ using UnityEngine;
 public class UsvDynamics : MonoBehaviour
 {
     [Header("Mass Matrix (M)")]
+    /// <summary>Rigid body mass, in kilograms.</summary>
     public float mass = 30f;
+    /// <summary>Yaw moment of inertia, in kg.m2.</summary>
     public float inertiaYaw = 15f;
+    /// <summary>Added mass in surge, from the water accelerated along with the hull.</summary>
     public float addedMassSurge = 5f; 
+    /// <summary>Added mass in sway. Much larger than in surge, because the hull pushes far more water sideways.</summary>
     public float addedMassSway = 20f; 
+    /// <summary>Added moment of inertia in yaw.</summary>
     public float addedInertiaYaw = 10f;
 
     [Header("Linear Damping Matrix (D)")]
+    /// <summary>Linear damping in surge. Sets the top speed reached for a given thrust.</summary>
     public float dampingSurge = 10f;
+    /// <summary>Linear damping in sway. Resists sideways drift.</summary>
     public float dampingSway = 40f;
+    /// <summary>Linear damping in yaw. Damps the rate of turn.</summary>
     public float dampingYaw = 20f;
 
     private Rigidbody rb;

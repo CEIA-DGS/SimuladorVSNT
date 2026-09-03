@@ -4,8 +4,11 @@ using Unity.Robotics.ROSTCPConnector.ROSGeometry;
 public class GpsSensor : BaseSensor<GpsData>
 {
     [Header("World Anchor (0,0,0 do Unity)")]
+    /// <summary>Latitude of the scene origin, in decimal degrees.</summary>
     public double originLatitude = -15.8021; 
+    /// <summary>Longitude of the scene origin, in decimal degrees.</summary>
     public double originLongitude = -47.8569;
+    /// <summary>Altitude of the scene origin, in meters.</summary>
     public double originAltitude = 1000.0;
 
     private Rigidbody parentRb;

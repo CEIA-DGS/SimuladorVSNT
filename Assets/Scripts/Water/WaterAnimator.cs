@@ -11,8 +11,11 @@ namespace MaritimeScenario.Water
     [RequireComponent(typeof(MeshFilter))]
     public class WaterAnimator : MonoBehaviour
     {
+        /// <summary>Wave amplitude in meters. Must match the value used by the hull, otherwise the boat floats off the surface.</summary>
         public float Amplitude = 0.15f;
+        /// <summary>Travel speed of the wave.</summary>
         public float Speed = 0.6f;
+        /// <summary>Spatial frequency of the wave.</summary>
         public float Scale = 0.05f;
 
         Mesh mesh;

@@ -10,12 +10,19 @@ namespace MaritimeScenario.Sensor
     /// </summary>
     public class Contact
     {
+        /// <summary>Identifier kept stable while the contact remains tracked.</summary>
         public int Id;
+        /// <summary>Last known position, in scene coordinates.</summary>
         public Vector3 Position;
+        /// <summary>Velocity estimated from consecutive sightings.</summary>
         public Vector3 Velocity;
+        /// <summary>Heading in degrees, derived from the estimated velocity.</summary>
         public float Heading;
+        /// <summary>Hull length of the contact, in meters.</summary>
         public float Length;
+        /// <summary>Simulated time of the first sighting, in seconds.</summary>
         public float FirstSeen;
+        /// <summary>Simulated time of the most recent sighting, in seconds.</summary>
         public float LastSeen;
 
         /// <summary>True while the contact is recent (first seen less than 1.5 s ago).</summary>

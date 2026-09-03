@@ -7,17 +7,24 @@ using System;
 public class Lidar2DPublisher : MonoBehaviour
 {
     [Header("ROS Configuration")]
+    /// <summary>ROS topic the laser scan is published on.</summary>
     public string topicName = "/scan";
+    /// <summary>Frame of reference stamped on the published scan.</summary>
     public string frameId = "lidar_link";
+    /// <summary>Publication rate, in hertz.</summary>
     public float publishFrequency = 10f; // Hz
 
     [Header("LiDAR Settings")]
+    /// <summary>Number of rays in one full scan.</summary>
     [Range(360, 2000)]
     public int numSamples = 1440;
+    /// <summary>Longest distance the scan reports, in meters.</summary>
     public float maxRange = 30f;
+    /// <summary>Shortest distance the scan reports, in meters. Closer returns are discarded.</summary>
     public float minRange = 0.1f;
     
     [Header("Visual Debug")]
+    /// <summary>Whether the rays are drawn in the Scene view.</summary>
     public bool showDebugRays = false;
 
     private ROSConnection ros;

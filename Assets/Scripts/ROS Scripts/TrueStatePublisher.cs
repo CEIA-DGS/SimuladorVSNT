@@ -8,8 +8,11 @@ public class TrueStatePublisher : MonoBehaviour
     ROSConnection ros;
     private Vector3 initialPosition;
     private Quaternion initialRotation;
+    /// <summary>ROS topic the ground-truth state is published on.</summary>
     public string topicOdometryName = "/auv/ground_truth";
+    /// <summary>Time between publications, in seconds.</summary>
     public float publishMessagePeriod = 1/30.0f;
+    /// <summary>Whether the pose is reported in world coordinates.</summary>
     public bool useGlobalPose = false;
     private float timeOdometryElapsed;
 

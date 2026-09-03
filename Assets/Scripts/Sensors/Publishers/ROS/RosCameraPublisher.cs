@@ -9,7 +9,9 @@ using RosMessageTypes.Std;
 public class RosCameraPublisher : BasePublisher<CameraData>
 {
     [Header("ROS Setup")]
+    /// <summary>ROS topic the camera image is published on.</summary>
     public string topicName = "/camera/image_raw";
+    /// <summary>Frame of reference stamped on the published image.</summary>
     public string frameId = "camera_link";
 
     private ROSConnection ros;

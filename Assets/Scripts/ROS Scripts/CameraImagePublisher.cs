@@ -6,13 +6,19 @@ using RosMessageTypes.Std;    // Para HeaderMsg
 public class CameraImagePublisher : MonoBehaviour
 {
     [Header("ROS Configuration")]
+    /// <summary>ROS topic the camera image is published on.</summary>
     public string topicName = "/camera/image_raw";
+    /// <summary>Frame of reference stamped on the published image.</summary>
     public string frameId = "camera_link";
+    /// <summary>Publication rate, in hertz. Ten is a sensible default that keeps the network from being flooded.</summary>
     public float publishRate = 10f; // 10Hz é um bom padrão para não sobrecarregar a rede
 
     [Header("Capture Settings")]
+    /// <summary>Camera whose render is published. Empty uses the camera on this object.</summary>
     public Camera captureCamera;
+    /// <summary>Width of the published image, in pixels.</summary>
     public int resolutionWidth = 640;
+    /// <summary>Height of the published image, in pixels.</summary>
     public int resolutionHeight = 480;
 
     private ROSConnection ros;
