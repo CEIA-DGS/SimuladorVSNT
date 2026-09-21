@@ -35,6 +35,21 @@ namespace MaritimeScenario.Testing
 
         /// <summary>Path actually travelled by the target during the run.</summary>
         public readonly List<Vector3> Track = new();
+
+        /// <summary>How many separate times the vehicle entered this target's risk zone.</summary>
+        public int RiskApproaches;
+
+        /// <summary>How many separate times the hulls touched.</summary>
+        public int Contacts;
+
+        /// <summary>
+        /// Whether the vehicle is inside the risk zone right now. Kept so an approach is
+        /// counted once when it begins, instead of once per physics step while it lasts.
+        /// </summary>
+        public bool InRiskZone;
+
+        /// <summary>Whether the hulls are touching right now, for the same reason as <see cref="InRiskZone"/>.</summary>
+        public bool InContact;
     }
 
     /// <summary>
@@ -57,10 +72,40 @@ namespace MaritimeScenario.Testing
         /// </summary>
         const int TRACK_SAMPLE_INTERVAL = 25;
 
+        /// <summary>
+        /// A risk approach only ends once the gap widens past the safety distance by this
+        /// factor. Without the margin a vehicle skirting the threshold would open and
+        /// close the same approach over and over, inflating the count.
+        /// </summary>
+        const float RISK_ZONE_EXIT_FACTOR = 1.2f;
+
         int stepCount;
+        Vector3 lastUsvPosition;
+        bool hasLastUsvPosition;
 
         /// <summary>Path actually travelled by the USV during the run.</summary>
         public List<Vector3> UsvTrack { get; } = new();
+
+        /// <summary>Everything worth reporting that happened during the run, in order.</summary>
+        public MissionEventLog Events { get; } = new();
+
+        /// <summary>
+        /// Horizontal distance travelled by the USV, in meters. Accumulated step by step
+        /// rather than from the sampled track, which would cut corners and under-report it.
+        /// </summary>
+        public float DistanceTravelledMeters { get; private set; }
+
+        /// <summary>
+        /// How many times the USV entered the risk zone of some target. Counts events, so
+        /// the same target approached twice counts twice.
+        /// </summary>
+        public int RiskApproachCount { get; private set; }
+
+        /// <summary>How many separate contacts happened during the run.</summary>
+        public int CollisionCount { get; private set; }
+
+        /// <summary>How many times the USV moved on to the next leg of its route.</summary>
+        public int WaypointTransitions { get; private set; }
 
         /// <summary>Simulated seconds elapsed since the run started.</summary>
         public float ElapsedSeconds { get; private set; }
@@ -116,6 +161,8 @@ namespace MaritimeScenario.Testing
             bool recordTrack = (stepCount++ % TRACK_SAMPLE_INTERVAL) == 0;
             if (recordTrack) UsvTrack.Add(usv.position);
 
+            AccumulateDistance(usv.position);
+
             foreach (var pair in results)
             {
                 Transform target = pair.Key;
@@ -140,21 +187,138 @@ namespace MaritimeScenario.Testing
                     result.TargetPositionAtMinDistance = b;
                 }
 
-                // Contact is measured by distance instead of physics colliders on purpose:
-                // giving the targets colliders would make the sensor's occlusion linecast
-                // hit them and report every target as hidden.
-                if (distance < result.ContactDistance)
-                    RecordCollision(result.Name);
+                TrackRiskZone(result, distance, a);
+                TrackContact(result, distance, a);
             }
+        }
+
+        /// <summary>
+        /// Adds the ground distance covered since the previous step. The first step only
+        /// seeds the reference position, so placing the USV at its start pose is not
+        /// counted as travel.
+        /// </summary>
+        /// <param name="usvPosition">Current position of the USV.</param>
+        void AccumulateDistance(Vector3 usvPosition)
+        {
+            if (hasLastUsvPosition)
+            {
+                DistanceTravelledMeters += new Vector2(
+                    usvPosition.x - lastUsvPosition.x,
+                    usvPosition.z - lastUsvPosition.z).magnitude;
+            }
+
+            lastUsvPosition = usvPosition;
+            hasLastUsvPosition = true;
+        }
+
+        /// <summary>
+        /// Opens and closes risk approaches against one target. The approach is counted
+        /// when it begins and only ends once the gap widens past the exit margin, so a
+        /// single close pass is one event instead of one per physics step.
+        /// </summary>
+        /// <param name="result">Running result of the target.</param>
+        /// <param name="distance">Current distance to the target, in meters.</param>
+        /// <param name="usvPosition">Current position of the USV.</param>
+        void TrackRiskZone(TargetEncounterResult result, float distance, Vector3 usvPosition)
+        {
+            if (!result.InRiskZone && distance < minSafeDistance)
+            {
+                result.InRiskZone = true;
+                result.RiskApproaches++;
+                RiskApproachCount++;
+
+                Events.Record(ElapsedSeconds, MissionEventType.RiskApproach, usvPosition,
+                              result.Name, distance,
+                              "abaixo da distancia de seguranca");
+                return;
+            }
+
+            if (result.InRiskZone && distance > minSafeDistance * RISK_ZONE_EXIT_FACTOR)
+            {
+                result.InRiskZone = false;
+                Events.Record(ElapsedSeconds, MissionEventType.RiskCleared, usvPosition,
+                              result.Name, distance, "afastou-se da zona de risco");
+            }
+        }
+
+        /// <summary>
+        /// Opens and closes contacts against one target, on the same principle as the risk
+        /// zone. Contact is measured by distance instead of physics colliders on purpose:
+        /// giving the targets colliders would make the sensor's occlusion linecast hit them
+        /// and report every target as hidden.
+        /// </summary>
+        /// <param name="result">Running result of the target.</param>
+        /// <param name="distance">Current distance to the target, in meters.</param>
+        /// <param name="usvPosition">Current position of the USV.</param>
+        void TrackContact(TargetEncounterResult result, float distance, Vector3 usvPosition)
+        {
+            if (!result.InContact && distance < result.ContactDistance)
+            {
+                result.InContact = true;
+                result.Contacts++;
+                RecordCollision(result.Name, distance, usvPosition);
+                return;
+            }
+
+            if (result.InContact && distance > result.ContactDistance * RISK_ZONE_EXIT_FACTOR)
+                result.InContact = false;
         }
 
         /// <summary>Records that the USV hit something.</summary>
         /// <param name="otherName">Name of the object that was hit.</param>
-        public void RecordCollision(string otherName)
+        /// <param name="distanceMeters">Gap between the hulls when the contact was detected.</param>
+        /// <param name="usvPosition">Position of the USV at the moment of contact.</param>
+        public void RecordCollision(string otherName, float distanceMeters = 0f, Vector3 usvPosition = default)
         {
-            if (CollisionDetected) return;
-            CollisionDetected = true;
-            CollidedWith = otherName;
+            CollisionCount++;
+
+            // The aggregate name keeps the first thing hit, which is the one that explains
+            // the run; a later contact is usually a consequence of the first.
+            if (!CollisionDetected)
+            {
+                CollisionDetected = true;
+                CollidedWith = otherName;
+            }
+
+            Events.Record(ElapsedSeconds, MissionEventType.Collision, usvPosition,
+                          otherName, distanceMeters, "cascos em contato");
+        }
+
+        /// <summary>
+        /// Records that the route advanced to its next leg. Driven from outside because the
+        /// transition itself is decided by the waypoint manager.
+        /// </summary>
+        /// <param name="usvPosition">Position of the USV when the leg changed.</param>
+        /// <param name="waypointIndex">Index of the waypoint that was reached.</param>
+        public void RecordWaypointTransition(Vector3 usvPosition, int waypointIndex)
+        {
+            WaypointTransitions++;
+            Events.Record(ElapsedSeconds, MissionEventType.WaypointReached, usvPosition,
+                          detail: "waypoint " + waypointIndex);
+        }
+
+        /// <summary>Records the start of the mission, which anchors the log at time zero.</summary>
+        /// <param name="usvPosition">Start position of the USV.</param>
+        /// <param name="detail">Free text with the initial conditions of the run.</param>
+        public void RecordMissionStart(Vector3 usvPosition, string detail = "")
+        {
+            Events.Record(0f, MissionEventType.MissionStart, usvPosition, detail: detail);
+        }
+
+        /// <summary>Records how the mission ended, either by finishing the route or by timing out.</summary>
+        /// <param name="usvPosition">Position of the USV when the run ended.</param>
+        public void RecordMissionEnd(Vector3 usvPosition)
+        {
+            MissionEventType type = MissionCompleted
+                ? MissionEventType.MissionComplete
+                : MissionEventType.MissionTimeout;
+
+            // The distance column means "the gap this event is about", so the total
+            // travelled goes in the text instead of overloading it with a second meaning.
+            string outcome = MissionCompleted ? "rota concluida" : "tempo limite atingido";
+
+            Events.Record(ElapsedSeconds, type, usvPosition,
+                          detail: $"{outcome}, {DistanceTravelledMeters:0} m percorridos");
         }
 
         /// <summary>
@@ -184,10 +348,14 @@ namespace MaritimeScenario.Testing
             sb.AppendLine($"Resultado: {(Passed ? "APROVADO" : "REPROVADO")}");
             sb.AppendLine($"Duração: {ElapsedSeconds:F1} s");
             sb.AppendLine($"Rota concluída: {(MissionCompleted ? "sim" : "não")}");
+            sb.AppendLine($"Distância percorrida: {DistanceTravelledMeters:F0} m");
+            sb.AppendLine($"Trocas de waypoint: {WaypointTransitions}");
+            sb.AppendLine($"Aproximações de risco: {RiskApproachCount}");
+            sb.AppendLine($"Colisões: {CollisionCount}");
             sb.AppendLine($"Distância mínima de segurança exigida: {minSafeDistance:F0} m");
 
             if (CollisionDetected)
-                sb.AppendLine($"COLISÃO com: {CollidedWith}");
+                sb.AppendLine($"Primeira colisão com: {CollidedWith}");
 
             foreach (var result in results.Values)
             {

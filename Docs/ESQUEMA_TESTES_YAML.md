@@ -1,4 +1,4 @@
-# Esquema YAML dos testes de navegação — Simulador VSNT
+# Esquema YAML dos testes de navegação, Simulador VSNT
 
 Referência do formato de configuração usado pela bancada de testes de navegação do
 simulador do VSNT. A seção final registra as divergências em relação ao formato proposto
@@ -34,7 +34,7 @@ Um Play executa a suíte inteira em sequência e grava as métricas em CSV.
 
 - **Eixos:** `X` = Leste, `Z` = Norte, em **metros**, no referencial local da cena.
   A cena é georreferenciada (UTM), e a conversão para lat/lon é feita em runtime por
-  `GeoReferenceUTM`. O arquivo de teste **não** usa lat/lon — ver seção 6.
+  `GeoReferenceUTM`. O arquivo de teste **não** usa lat/lon, ver seção 6.
 - **Rumos:** graus, `0` = Norte, `90` = Leste, `180` = Sul, `270` = Oeste.
 - **Posições relativas:** as posições dos alvos e os waypoints são **deslocamentos em
   relação à partida do USV**, não posições absolutas. Isso permite mover o cenário
@@ -94,7 +94,7 @@ scenario:
 
 | Campo | Tipo | Unidade | Padrão | Descrição |
 |---|---|---|---|---|
-| `startXZ` | `[x, z]` | m | `[9900, 7500]` | Partida do USV, em coordenadas locais absolutas da cena. **Única posição absoluta do arquivo** — todo o resto é relativo a ela. |
+| `startXZ` | `[x, z]` | m | `[9900, 7500]` | Partida do USV, em coordenadas locais absolutas da cena. **Única posição absoluta do arquivo**, todo o resto é relativo a ela. |
 | `startHeadingDegrees` | número | grau | `0` | Rumo inicial. |
 | `cruiseSpeedKnots` | número | nó | `12` | Velocidade de cruzeiro desejada. |
 | `publishWaypoints` | booleano | — | `true` | Se a própria simulação publica a rota. `false` quando os waypoints vêm de fora (ROS). |
@@ -109,7 +109,7 @@ scenario:
 | `maxDurationSeconds` | número | s | `180` | Tempo máximo de simulação. Atingido o limite, a execução encerra. |
 | `minSafeDistanceMeters` | número | m | `100` | Distância mínima de segurança. Aproximar-se mais que isso de um alvo **reprova** a execução. |
 
-### `targets` — lista de alvos
+### `targets`, lista de alvos
 
 | Campo | Tipo | Unidade | Padrão | Descrição |
 |---|---|---|---|---|
@@ -138,7 +138,7 @@ scenario:
 
 ## 3. Arquivo de suíte
 
-Não descreve cenário nenhum — define as condições comuns e **lista o que executar**.
+Não descreve cenário nenhum, define as condições comuns e **lista o que executar**.
 
 ```yaml
 suite: Bateria padrão RIPEAM
@@ -188,7 +188,7 @@ não significariam nada em conjunto.
 | `randomSeed` | inteiro | — | `12345` | Semente do gerador aleatório global, para que qualquer ruído incidental (ex.: modelos de sensor) se repita igual entre execuções. |
 | `timeScale` | número | ×  | `1` | Quantas vezes mais rápido que o tempo real a bateria roda. **Não altera resultado algum:** muda o tempo simulado por segundo de relógio, não o tamanho do passo de física. |
 
-> `timeScale` só é seguro porque **tudo que afeta medição roda no passo fixo** — dinâmica,
+> `timeScale` só é seguro porque **tudo que afeta medição roda no passo fixo**, dinâmica,
 > controlador, guiagem, waypoints, alvos, sensor e a própria bancada. Mover qualquer um
 > desses para um `Update` por quadro quebraria a garantia. Valores altos demais para a
 > taxa de quadros simplesmente não são alcançados; nunca produzem resultado errado.
@@ -202,7 +202,7 @@ não significariam nada em conjunto.
 | `exportResults` | booleano | `true` | Gera os CSV e o resumo. |
 | `csvSeparator` | texto | `","` | Separador de coluna. Números saem **sempre com ponto decimal**, independente do locale da máquina. |
 
-### `scenarios` — as três formas de entrada
+### `scenarios`, as três formas de entrada
 
 **1. Referência a arquivo externo.** Caminho procurado primeiro ao lado da suíte, depois
 a partir da raiz do projeto.
@@ -223,7 +223,7 @@ a partir da raiz do projeto.
       startOffsetXZ: [0, 800]
 ```
 
-**3. Entrada aleatória — uma execução por semente.**
+**3. Entrada aleatória, uma execução por semente.**
 
 ```yaml
 - random:
@@ -277,7 +277,7 @@ outro.**
 - TAB na indentação.
 
 **Comportamento na leitura:** tolerante com ausência, rigoroso com erro. Campo ausente usa
-o padrão — o arquivo só precisa declarar o que difere. Campo presente e malformado
+o padrão, o arquivo só precisa declarar o que difere. Campo presente e malformado
 **interrompe a execução** com a linha, em vez de virar zero silenciosamente:
 
 ```
@@ -289,26 +289,30 @@ desfecho possível.
 
 ---
 
-## 5. Saída — as métricas
+## 5. Saída, as métricas
 
 Ao fim da bateria são gravados, na pasta de `output.folder`:
 
 | Arquivo | Conteúdo |
 |---|---|
 | `<suíte>_<data>_execucoes.csv` | uma linha por execução |
-| `<suíte>_<data>_cpa.csv` | uma linha por encontro USV × alvo |
+| `<suíte>_<data>_cpa.csv` | uma linha por encontro USV x alvo |
+| `<suíte>_<data>_eventos.csv` | uma linha por evento, em ordem cronológica |
 | `<suíte>_<data>_resumo.md` | resumo legível, com as reprovações detalhadas |
 | `<cenário>[_seedN].png` | mapa da execução desenhado sobre a carta |
 
-Dois níveis porque a métrica principal — o **CPA observado** (menor distância realmente
-atingida) — é **por alvo**, não por execução.
+Três níveis porque as perguntas são de naturezas diferentes. O agregado por execução
+responde *quanto*; o detalhamento por alvo responde *contra quem*, já que a métrica
+principal, o **CPA observado** (menor distância realmente atingida), é por alvo; e o log
+de eventos responde *quando e onde*, que é o que permite rastrear uma falha até o
+instante em que ela começou.
 
 **`_execucoes.csv`:**
 
 ```
 indice, cenario, origem, semente, aprovado, colisao, colidiu_com, rota_concluida,
-duracao_s, cpa_min_m, cpa_min_alvo, cpa_min_t_s, distancia_seguranca_m,
-alvos, violacoes, mapa
+duracao_s, distancia_percorrida_m, waypoints_atingidos, aproximacoes_risco, colisoes,
+cpa_min_m, cpa_min_alvo, cpa_min_t_s, distancia_seguranca_m, alvos, violacoes, mapa
 ```
 
 **`_cpa.csv`:**
@@ -317,10 +321,40 @@ alvos, violacoes, mapa
 indice, cenario, semente, alvo, cpa_m, t_cpa_s, distancia_contato_m, violou_seguranca
 ```
 
+**`_eventos.csv`:**
+
+```
+indice, cenario, semente, t_s, evento, alvo, x_m, z_m, latitude, longitude,
+distancia_m, detalhe
+```
+
+Os eventos registrados são `inicio`, `waypoint`, `aproximacao_risco`,
+`risco_encerrado`, `colisao`, `rota_concluida` e `tempo_esgotado`. A posição sai em
+coordenadas de cena e em latitude/longitude, para que o log possa ser cruzado com dados
+gravados fora do simulador, onde as coordenadas geográficas são o terreno comum. As
+colunas geográficas ficam vazias quando a cena não tem georreferência, como no cenário
+fictício.
+
+### Contagem por evento, não por passo
+
+`aproximacoes_risco` e `colisoes` contam **eventos**, não passos de física. A 50 Hz, uma
+única passagem rente a um alvo permanece dentro do limiar por centenas de passos; contar
+a condição a cada passo produziria centenas de ocorrências para o que foi uma
+aproximação só.
+
+A contagem por isso abre a aproximação quando o limiar é cruzado e só a encerra quando a
+distância volta a superá-lo com margem de 20%. Sem essa margem, uma embarcação navegando
+rente ao limiar abriria e fecharia a mesma aproximação repetidamente.
+
+Vale notar a diferença entre duas colunas parecidas: `violacoes` conta quantos **alvos
+distintos** chegaram a ser aproximados demais em algum momento; `aproximacoes_risco`
+conta quantas **vezes** isso aconteceu. Um alvo aproximado duas vezes soma 1 na primeira
+e 2 na segunda.
+
 Booleanos saem como `1`/`0`, para agregarem direto como média. Números com **ponto**
-decimal e `UTF-8 BOM`, independente do locale — em máquina configurada em pt-BR o padrão
+decimal e `UTF-8 BOM`, independente do locale, em máquina configurada em pt-BR o padrão
 do sistema sairia `0,05`, colidindo com o separador de coluna e corrompendo o arquivo sem
-lançar erro nenhum.
+lançar erro nenhum. Campos de texto que contenham o separador saem entre aspas.
 
 ---
 

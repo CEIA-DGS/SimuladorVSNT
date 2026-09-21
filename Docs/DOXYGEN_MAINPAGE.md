@@ -1,8 +1,7 @@
 # Simulador VSNT — parâmetros do ambiente
 
 Referência dos parâmetros ajustáveis do ambiente de simulação do VSNT (embarcação
-autônoma não tripulada), do Projeto PRISMA — CASNAV / Marinha do Brasil, desenvolvido na
-Unidade Embrapii CEIA-UFG.
+autônoma não tripulada)
 
 Esta documentação é gerada a partir dos comentários do próprio código, então acompanha o
 que está implementado. Cada parâmetro listado nas páginas de classe pode ser ajustado sem
@@ -25,8 +24,8 @@ Os campos que aparecem no Inspector são os campos públicos das classes documen
 aqui. O texto de ajuda que a Unity mostra ao passar o mouse é o mesmo descrito na página
 da classe.
 
-Para os arquivos YAML, a referência completa do formato — todos os campos, unidades,
-obrigatoriedade e valores padrão — está em `Docs/ESQUEMA_TESTES_YAML.md`, fora desta
+Para os arquivos YAML, a referência completa do formato, todos os campos, unidades,
+obrigatoriedade e valores padrão, está em `Docs/ESQUEMA_TESTES_YAML.md`, fora desta
 documentação gerada.
 
 ---
@@ -89,7 +88,7 @@ em ROS.
 ### Integração ROS
 
 O projeto compila com o símbolo `ROS2` definido. Publicadores e assinantes seguem os tipos
-do ROS 2, não do ROS 1.
+do ROS 2.
 
 | Classe | Publica ou assina |
 |---|---|
@@ -105,7 +104,7 @@ do ROS 2, não do ROS 1.
 
 ### Bancada de testes de navegação
 
-Os cenários de teste são declarados em arquivos YAML, não no Inspector. As classes abaixo
+Os cenários de teste são declarados em arquivos YAML. As classes abaixo
 são o mecanismo; os parâmetros ficam nos arquivos.
 
 | Classe | Papel |
@@ -164,5 +163,5 @@ doxygen Doxyfile
 ```
 
 A saída é gravada em `docs-gerados/html/`; abrir `index.html` no navegador. A pasta não é
-versionada — cada regeneração parte do código atual, de modo que a documentação nunca
+versionada, cada regeneração parte do código atual, de modo que a documentação nunca
 fica defasada em relação ao que está implementado.

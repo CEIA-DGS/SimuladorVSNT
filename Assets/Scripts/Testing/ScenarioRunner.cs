@@ -107,6 +107,17 @@ namespace MaritimeScenario.Testing
         /// </summary>
         bool routePublished;
 
+        /// <summary>
+        /// Leg the waypoint manager was heading to on the previous step. Waypoint changes
+        /// are observed from the outside, through the destination the manager exposes,
+        /// rather than by having the manager itself report them: the test bench then stays
+        /// a pure observer of the navigation stack it is measuring.
+        /// </summary>
+        Vector3 lastWaypointTarget;
+
+        /// <summary>Whether <see cref="lastWaypointTarget"/> already holds a leg to compare against.</summary>
+        bool hasWaypointTarget;
+
         void Start()
         {
             if (RunOnStart) Run();
@@ -168,6 +179,10 @@ namespace MaritimeScenario.Testing
             SpawnTargets();
             PublishRoute();
 
+            hasWaypointTarget = false;
+            Metrics.RecordMissionStart(Usv.position,
+                $"{Scenario.Targets?.Count ?? 0} alvos, limite de {Scenario.MaxDurationSeconds:0} s");
+
             IsRunning = true;
             Debug.Log($"[ScenarioRunner] Cenário iniciado: {Scenario.DisplayName}");
         }
@@ -184,6 +199,10 @@ namespace MaritimeScenario.Testing
             // Zeroing the cruise speed brings the USV to a stop when the run ends by timeout
             // (when it ends by finishing the route, LosGuidance already commands zero).
             if (guidance != null) guidance.cruiseSpeed = 0f;
+
+            // Closes the log before the report is built, so the run always ends with an
+            // entry saying how it ended.
+            Metrics.RecordMissionEnd(Usv != null ? Usv.position : Vector3.zero);
 
             string report = Metrics.BuildReport(Scenario.DisplayName);
 
@@ -211,10 +230,15 @@ namespace MaritimeScenario.Testing
             if (!IsRunning || Metrics == null) return;
 
             Metrics.Sample(Usv, Time.fixedDeltaTime);
+            TrackWaypointTransitions();
 
             // Only a run that actually published a route can "finish" it.
             if (routePublished && waypointManager != null && !waypointManager.IsMissionActive)
             {
+                // Reaching the last waypoint ends the mission without changing the leg the
+                // manager points at, so that final arrival has to be counted here.
+                Metrics.RecordWaypointTransition(Usv.position, Metrics.WaypointTransitions + 1);
+
                 Metrics.MissionCompleted = true;
                 Stop();
                 return;
@@ -222,6 +246,30 @@ namespace MaritimeScenario.Testing
 
             if (Metrics.ElapsedSeconds >= Scenario.MaxDurationSeconds)
                 Stop();
+        }
+
+        /// <summary>
+        /// Counts an arrival whenever the waypoint manager starts heading to a different
+        /// leg. Only runs while a mission is active, so the leg left over from a finished
+        /// route is not read as a new arrival.
+        /// </summary>
+        void TrackWaypointTransitions()
+        {
+            if (waypointManager == null || !waypointManager.IsMissionActive) return;
+
+            Vector3 currentTarget = waypointManager.CurrentPk1;
+
+            if (!hasWaypointTarget)
+            {
+                lastWaypointTarget = currentTarget;
+                hasWaypointTarget = true;
+                return;
+            }
+
+            if (currentTarget == lastWaypointTarget) return;
+
+            lastWaypointTarget = currentTarget;
+            Metrics.RecordWaypointTransition(Usv.position, Metrics.WaypointTransitions + 1);
         }
 
         /// <summary>

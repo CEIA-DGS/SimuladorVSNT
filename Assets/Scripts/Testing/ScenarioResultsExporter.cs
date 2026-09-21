@@ -63,6 +63,25 @@ namespace MaritimeScenario.Testing
         /// <summary>How many targets were approached closer than the safety margin.</summary>
         public int SafetyViolations;
 
+        /// <summary>
+        /// How many times the vehicle entered the risk zone of some target. Counts events,
+        /// unlike <see cref="SafetyViolations"/>, which counts how many distinct targets
+        /// were ever approached too closely.
+        /// </summary>
+        public int RiskApproaches;
+
+        /// <summary>How many separate contacts happened during the run.</summary>
+        public int CollisionCount;
+
+        /// <summary>How many waypoints the vehicle reached along its route.</summary>
+        public int WaypointTransitions;
+
+        /// <summary>Ground distance covered by the vehicle, in meters.</summary>
+        public float DistanceTravelledMeters;
+
+        /// <summary>Everything worth reporting that happened during the run, in order.</summary>
+        public IReadOnlyList<MissionEvent> Events = new List<MissionEvent>();
+
         /// <summary>Path of the map exported for this run, when there is one.</summary>
         public string MapPath = "";
 
@@ -93,6 +112,11 @@ namespace MaritimeScenario.Testing
             result.CollidedWith = metrics.CollidedWith ?? "";
             result.MissionCompleted = metrics.MissionCompleted;
             result.DurationSeconds = metrics.ElapsedSeconds;
+            result.RiskApproaches = metrics.RiskApproachCount;
+            result.CollisionCount = metrics.CollisionCount;
+            result.WaypointTransitions = metrics.WaypointTransitions;
+            result.DistanceTravelledMeters = metrics.DistanceTravelledMeters;
+            result.Events = metrics.Events.Events;
 
             foreach (TargetEncounterResult encounter in metrics.Results)
             {
@@ -147,6 +171,7 @@ namespace MaritimeScenario.Testing
 
             written.Add(Write(Path.Combine(folder, prefix + "_execucoes.csv"), BuildRunsCsv(results, separator)));
             written.Add(Write(Path.Combine(folder, prefix + "_cpa.csv"), BuildEncountersCsv(results, separator)));
+            written.Add(Write(Path.Combine(folder, prefix + "_eventos.csv"), BuildEventsCsv(results, separator)));
             written.Add(Write(Path.Combine(folder, prefix + "_resumo.md"), BuildSummary(suite, results)));
 
             return written;
@@ -164,6 +189,63 @@ namespace MaritimeScenario.Testing
 
         // ---------------- tables ----------------
 
+        /// <summary>
+        /// Builds the one-row-per-event table: the chronological log of every run.
+        ///
+        /// While the other two tables say how a run ended, this one says how it unfolded,
+        /// which is what allows a failure to be traced back to the moment it started. The
+        /// position comes in scene coordinates and in latitude/longitude, so the log can be
+        /// lined up with data recorded outside the simulator.
+        /// </summary>
+        /// <param name="results">The results, in run order.</param>
+        /// <param name="separator">CSV column separator.</param>
+        /// <returns>The CSV text.</returns>
+        static string BuildEventsCsv(IReadOnlyList<ScenarioRunResult> results, string separator)
+        {
+            var sb = new StringBuilder();
+            sb.AppendLine(Row(separator,
+                "indice", "cenario", "semente", "t_s", "evento", "alvo",
+                "x_m", "z_m", "latitude", "longitude", "distancia_m", "detalhe"));
+
+            foreach (ScenarioRunResult r in results)
+                foreach (MissionEvent e in r.Events)
+                    sb.AppendLine(Row(separator,
+                        r.Index.ToString(Invariant),
+                        r.ScenarioName,
+                        r.HasSeed ? r.Seed.ToString(Invariant) : "",
+                        Number(e.TimeSeconds),
+                        EventName(e.Type),
+                        e.Target,
+                        Number(e.UsvPosition.x),
+                        Number(e.UsvPosition.z),
+                        Degrees(e.Latitude),
+                        Degrees(e.Longitude),
+                        Number(e.DistanceMeters),
+                        e.Detail));
+
+            return sb.ToString();
+        }
+
+        /// <summary>
+        /// Portuguese label of an event type, so the log reads without a legend.
+        /// </summary>
+        /// <param name="type">The event type.</param>
+        /// <returns>The label used in the table.</returns>
+        static string EventName(MissionEventType type)
+        {
+            switch (type)
+            {
+                case MissionEventType.MissionStart: return "inicio";
+                case MissionEventType.WaypointReached: return "waypoint";
+                case MissionEventType.RiskApproach: return "aproximacao_risco";
+                case MissionEventType.RiskCleared: return "risco_encerrado";
+                case MissionEventType.Collision: return "colisao";
+                case MissionEventType.MissionComplete: return "rota_concluida";
+                case MissionEventType.MissionTimeout: return "tempo_esgotado";
+                default: return type.ToString().ToLowerInvariant();
+            }
+        }
+
         /// <summary>Builds the one-row-per-run table.</summary>
         /// <param name="results">The results, in run order.</param>
         /// <param name="separator">CSV column separator.</param>
@@ -173,7 +255,8 @@ namespace MaritimeScenario.Testing
             var sb = new StringBuilder();
             sb.AppendLine(Row(separator,
                 "indice", "cenario", "origem", "semente", "aprovado", "colisao", "colidiu_com",
-                "rota_concluida", "duracao_s", "cpa_min_m", "cpa_min_alvo", "cpa_min_t_s",
+                "rota_concluida", "duracao_s", "distancia_percorrida_m", "waypoints_atingidos",
+                "aproximacoes_risco", "colisoes", "cpa_min_m", "cpa_min_alvo", "cpa_min_t_s",
                 "distancia_seguranca_m", "alvos", "violacoes", "mapa"));
 
             foreach (ScenarioRunResult r in results)
@@ -188,6 +271,10 @@ namespace MaritimeScenario.Testing
                     r.CollidedWith,
                     Flag(r.MissionCompleted),
                     Number(r.DurationSeconds),
+                    Number(r.DistanceTravelledMeters),
+                    r.WaypointTransitions.ToString(Invariant),
+                    r.RiskApproaches.ToString(Invariant),
+                    r.CollisionCount.ToString(Invariant),
                     Number(r.MinCpaMeters),
                     r.MinCpaTarget,
                     Number(r.MinCpaTimeSeconds),
@@ -239,10 +326,22 @@ namespace MaritimeScenario.Testing
             float cpaSum = 0f;
             int cpaCount = 0;
 
+            int totalCollisions = 0;
+            int totalRiskApproaches = 0;
+            int totalWaypoints = 0;
+            float totalDistance = 0f;
+            float totalDuration = 0f;
+
             foreach (ScenarioRunResult r in results)
             {
                 if (r.Passed) passed++;
                 if (r.CollisionDetected) collisions++;
+
+                totalCollisions += r.CollisionCount;
+                totalRiskApproaches += r.RiskApproaches;
+                totalWaypoints += r.WaypointTransitions;
+                totalDistance += r.DistanceTravelledMeters;
+                totalDuration += r.DurationSeconds;
 
                 if (r.MinCpaMeters < float.MaxValue)
                 {
@@ -276,7 +375,7 @@ namespace MaritimeScenario.Testing
             float passRate = results.Count > 0 ? 100f * passed / results.Count : 0f;
             sb.AppendLine($"- Execuções: **{results.Count}**");
             sb.AppendLine($"- Aprovadas: **{passed}** ({Percent(passRate)}%)");
-            sb.AppendLine($"- Com colisão: **{collisions}**");
+            sb.AppendLine($"- Execuções com colisão: **{collisions}**");
             if (cpaCount > 0)
             {
                 sb.AppendLine($"- CPA médio (menor por execução): **{Number(cpaSum / cpaCount)} m**");
@@ -284,18 +383,28 @@ namespace MaritimeScenario.Testing
             }
             sb.AppendLine();
 
+            sb.AppendLine("## Totais da bateria");
+            sb.AppendLine();
+            sb.AppendLine($"- Aproximações de risco: **{totalRiskApproaches}**");
+            sb.AppendLine($"- Colisões: **{totalCollisions}**");
+            sb.AppendLine($"- Waypoints atingidos: **{totalWaypoints}**");
+            sb.AppendLine($"- Distância percorrida: **{Number(totalDistance)} m**");
+            sb.AppendLine($"- Tempo simulado: **{Number(totalDuration)} s**");
+            sb.AppendLine();
+
             sb.AppendLine("## Execuções");
             sb.AppendLine();
-            sb.AppendLine("| # | Cenário | Semente | Resultado | Duração (s) | CPA mín. (m) | Alvo do CPA | Colisão |");
-            sb.AppendLine("|---|---------|---------|-----------|-------------|--------------|-------------|---------|");
+            sb.AppendLine("| # | Cenário | Semente | Resultado | Duração (s) | Distância (m) | Waypoints | Aprox. risco | Colisões | CPA mín. (m) | Alvo do CPA |");
+            sb.AppendLine("|---|---------|---------|-----------|-------------|---------------|-----------|--------------|----------|--------------|-------------|");
 
             foreach (ScenarioRunResult r in results)
             {
                 string cpa = r.MinCpaMeters < float.MaxValue ? Number(r.MinCpaMeters) : "n/d";
                 sb.AppendLine($"| {r.Index} | {r.ScenarioName} | {(r.HasSeed ? r.Seed.ToString(Invariant) : "-")} " +
                               $"| {(r.Passed ? "APROVADO" : "REPROVADO")} | {Number(r.DurationSeconds)} " +
-                              $"| {cpa} | {(string.IsNullOrEmpty(r.MinCpaTarget) ? "-" : r.MinCpaTarget)} " +
-                              $"| {(r.CollisionDetected ? r.CollidedWith : "-")} |");
+                              $"| {Number(r.DistanceTravelledMeters)} | {r.WaypointTransitions} " +
+                              $"| {r.RiskApproaches} | {r.CollisionCount} " +
+                              $"| {cpa} | {(string.IsNullOrEmpty(r.MinCpaTarget) ? "-" : r.MinCpaTarget)} |");
             }
 
             sb.AppendLine();
@@ -312,7 +421,13 @@ namespace MaritimeScenario.Testing
                 if (r.HasSeed)
                     sb.AppendLine($"Reproduza com a semente `{r.Seed}`.");
                 if (r.CollisionDetected)
-                    sb.AppendLine($"- Colisão com **{r.CollidedWith}**.");
+                {
+                    string extra = r.CollisionCount > 1 ? $" (total de {r.CollisionCount} contatos)" : "";
+                    sb.AppendLine($"- Primeira colisão com **{r.CollidedWith}**{extra}.");
+                }
+
+                if (r.RiskApproaches > 0)
+                    sb.AppendLine($"- Aproximações de risco: **{r.RiskApproaches}**.");
 
                 foreach (TargetEncounterResult e in r.Encounters)
                     if (e.SafetyViolated)
@@ -338,6 +453,22 @@ namespace MaritimeScenario.Testing
         {
             if (float.IsNaN(value) || value >= float.MaxValue) return "";
             return value.ToString("0.###", Invariant);
+        }
+
+        /// <summary>
+        /// Formats a geographic coordinate. Seven decimal places keep the position to
+        /// roughly a centimetre, far below what the simulation resolves, so the column
+        /// never becomes the limiting factor when the log is compared with field data.
+        ///
+        /// An exact zero means the scene carries no georeference, and is written as an
+        /// empty cell instead of a coordinate in the Gulf of Guinea.
+        /// </summary>
+        /// <param name="value">Coordinate in decimal degrees.</param>
+        /// <returns>The formatted value, or an empty string when there is no georeference.</returns>
+        static string Degrees(double value)
+        {
+            if (double.IsNaN(value) || value == 0.0) return "";
+            return value.ToString("0.#######", Invariant);
         }
 
         /// <summary>Formats a percentage with one decimal, always with a dot separator.</summary>
